@@ -34,6 +34,8 @@ Two things exist in the project history:
 | **Route protection** | `proxy.ts` (Next.js 16 renamed `middleware.ts` → `proxy.ts` — a real breaking change caught and handled during this build) gates `/dashboard`; the dashboard page also independently re-checks auth as defense in depth, per Next.js's own recommendation. Verified via direct request testing: unauthenticated requests to `/dashboard` correctly 307-redirect to `/login`. |
 | **Dashboard** | Real per-user data from Postgres (Supabase): read history, aggregate stats (total reads, average ReadScore, tokens saved), and API key management — all protected by row-level security so each user only ever sees their own rows. |
 | **API key issuance** | Keys are generated, sha-256 hashed before storage (plaintext is shown exactly once at creation and never persisted or retrievable again), and revocable. |
+| **`/api/v1/read`** | The authenticated public Read API. Requires `Authorization: Bearer sk-ar-...`; 401s on missing/invalid/revoked keys. 60 req/min per key (vs. 10/min/IP on the anonymous playground endpoint). Verifies the key by sha-256 lookup against `api_keys` via a service-role Supabase client (`src/lib/supabase/admin.ts`) — necessary because a bearer-token caller has no session cookie to satisfy the RLS `auth.uid()` policies. Persists every read to `reads` under the key owner's `user_id` and best-effort updates `last_used_at`. |
+| **`/api/mcp`** | A real remote MCP server (Streamable HTTP transport, stateless — fresh `McpServer` + transport per request, matching serverless execution) exposing `read_url` and `score_url` tools, gated by the same bearer-auth as `/api/v1/read`. Point any MCP client (Claude, ChatGPT connectors, custom agents) at this URL with an AgentRead API key. |
 | **Landing page** | Live ReadScan widget calling the real API (not demo data), a working waitlist form, and a feature summary that describes only what's actually built. |
 | **Docs page** | Publishes the ReadScore methodology in full — every scoring rule is documented, not hidden. |
 | **Production build** | `npm run build` compiles clean with no type errors. |
@@ -58,8 +60,7 @@ step by step in `SETUP.md`.
 
 ## 🔭 Not built yet (real product roadmap, not infrastructure)
 
-- Bearer-token enforcement on the public API (keys are issued but not yet required to call `/api/read`)
-- MCP server exposing `read_url`, `score_url`, `batch`, `map_site`, `extract_data`
+- More MCP tools: `batch`, `map_site`, `extract_data` (`read_url` and `score_url` are live — see above)
 - Serve middleware (Layer 2 — one-line Next.js middleware serving Markdown to verified AI crawlers from a site owner's own domain)
 - Crawl (whole-domain corpus), Watch (change-detection webhooks), llms.txt Studio, agent-traffic analytics
 - Pay-per-crawl monetization for publishers

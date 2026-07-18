@@ -56,8 +56,9 @@ from ReadScore maps to a specific, explainable flag a developer can go fix.*
 
 Three layers, one engine:
 
-- **Layer 1 — Read** *(live today)*: REST API + (planned) MCP server. Any developer or
-  agent can POST a URL and get back Markdown + ReadScore + risk flags.
+- **Layer 1 — Read** *(live today)*: REST API (`/api/v1/read`) + a remote MCP server
+  (`/api/mcp`, Streamable HTTP). Any developer or agent can POST a URL — or call the
+  `read_url`/`score_url` MCP tools directly — and get back Markdown + ReadScore + risk flags.
 - **Layer 2 — Serve** *(next)*: one line of Next.js middleware that serves this same
   clean Markdown directly to verified AI crawlers (GPTBot, ClaudeBot, PerplexityBot),
   while human visitors see the site completely unchanged.
@@ -192,8 +193,8 @@ signal by early-stage investors — it reads as founder maturity, not weakness.*
 
 - ✅ Read API + ReadScore engine (live)
 - ✅ Google/email auth, dashboard, API key management (live)
-- ⏳ Bearer-token auth enforcement on the public API
-- ⏳ MCP server (`read_url`, `score_url`, `batch`, `map_site`, `extract_data`)
+- ✅ Bearer-token auth enforcement on the public API (`/api/v1/read`)
+- ✅ MCP server (`read_url`, `score_url` live at `/api/mcp`; `batch`, `map_site`, `extract_data` still to come)
 - ⏳ Serve middleware for Next.js (Layer 2)
 - ⏳ Crawl, Watch (change detection), llms.txt Studio, agent-traffic analytics
 - ⏳ Pay-per-crawl monetization for publishers

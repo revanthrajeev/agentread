@@ -4,10 +4,25 @@ export default function DocsPage() {
       <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Docs</h1>
 
       <Section title="Quickstart">
-        <p>Two real endpoints exist today, no mock data:</p>
+        <p>Two free, no-auth endpoints power the site&apos;s own demos:</p>
         <Code>{`POST /api/scan   { "url": "https://example.com" }   → score only, no auth
-POST /api/read   { "url": "https://example.com" }   → full markdown + score`}</Code>
-        <p>Sign in to persist reads to your dashboard and issue API keys (bearer-auth on the public API is the next milestone — see PROJECT.md).</p>
+POST /api/read   { "url": "https://example.com" }   → full markdown + score, 10 req/min per IP`}</Code>
+        <p>For programmatic access, issue an API key in the dashboard and use the authenticated Read API:</p>
+        <Code>{`POST /api/v1/read
+Authorization: Bearer sk-ar-...
+{ "url": "https://example.com" }   → full markdown + score, 60 req/min per key, persisted to your dashboard`}</Code>
+      </Section>
+
+      <Section title="MCP server">
+        <p>
+          A remote MCP server is live at <code className="rounded bg-white/10 px-1">/api/mcp</code> —
+          add it to any MCP-capable client (Claude, ChatGPT connectors, custom agents) with the same
+          API key as the bearer token. Exposes two tools:
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li><code className="rounded bg-white/10 px-1">read_url</code> — full markdown + ReadScore + flags</li>
+          <li><code className="rounded bg-white/10 px-1">score_url</code> — score + flags only, cheaper when content isn&apos;t needed</li>
+        </ul>
       </Section>
 
       <Section title="Response shape">
@@ -38,13 +53,12 @@ POST /api/read   { "url": "https://example.com" }   → full markdown + score`}<
       </Section>
 
       <Section title="Rate limits">
-        <p>10 reads/minute per IP on the public playground. Signed-in users get persisted history; per-key limits ship with the paid API (see PROJECT.md roadmap).</p>
+        <p>10 reads/minute per IP on the public playground (<code className="rounded bg-white/10 px-1">/api/read</code>, <code className="rounded bg-white/10 px-1">/api/scan</code>). 60 reads/minute per API key on the authenticated API and MCP server.</p>
       </Section>
 
       <Section title="Roadmap">
         <ul className="list-disc space-y-1 pl-5">
-          <li>Bearer-token auth on <code className="rounded bg-white/10 px-1">/api/read</code> using the keys issued in the dashboard</li>
-          <li>MCP server exposing read_url / score_url / batch / map_site</li>
+          <li>More MCP tools: batch, map_site, extract_data</li>
           <li>Serve middleware (Next.js) for site owners</li>
           <li>Crawl, Watch, llms.txt Studio, agent analytics</li>
         </ul>

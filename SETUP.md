@@ -15,7 +15,12 @@ Time required: ~20 minutes, all free tier.
 2. Once it's created, open **Project Settings → API**. Copy:
    - `Project URL` → this is `NEXT_PUBLIC_SUPABASE_URL`
    - `anon public` key → this is `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Create `.env.local` in the project root (copy `.env.local.example`) and paste both values in.
+   - `service_role` key (also on this page, under "Project API keys") → this is
+     `SUPABASE_SERVICE_ROLE_KEY`. **Server-only — never expose this to the browser.**
+     It's what lets `/api/v1/read` and `/api/mcp` verify a bearer API key without a
+     logged-in session (API-key callers have no Supabase cookie, so the normal
+     row-level-security policies can't resolve `auth.uid()` for them).
+3. Create `.env.local` in the project root (copy `.env.local.example`) and paste all three values in.
 4. Open **SQL Editor** in Supabase → **New query** → paste the entire contents of
    `supabase/schema.sql` from this repo → **Run**. This creates:
    - `profiles` (auto-filled on signup, including from Google)
@@ -73,9 +78,10 @@ git push -u origin main
 ## 4. Deploy (Vercel — free)
 
 1. [vercel.com/new](https://vercel.com/new) → import your GitHub repo.
-2. In **Environment Variables**, add the same three from `.env.local`:
+2. In **Environment Variables**, add the same four from `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` → mark it **Sensitive** in Vercel's dashboard
    - `NEXT_PUBLIC_SITE_URL` → set this to your real Vercel URL, e.g. `https://agentread.vercel.app`
 3. Deploy.
 4. Back in Supabase **Authentication → URL Configuration**, add your production URL to both
@@ -95,6 +101,33 @@ Point its DNS at Vercel per their dashboard instructions, then update
 
 ---
 
+## 6. Test the Read API and MCP server
+
+Once you're signed in on `/dashboard`, issue an API key there, then:
+
+```bash
+# REST API
+curl -X POST http://localhost:3000/api/v1/read \
+  -H "Authorization: Bearer sk-ar-..." \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+
+# MCP server — point any MCP client (Claude, ChatGPT connectors, custom agents) at
+# http://localhost:3000/api/mcp (or your deployed URL) with the same bearer token.
+# tools/list should return read_url and score_url.
+curl -X POST http://localhost:3000/api/mcp \
+  -H "Authorization: Bearer sk-ar-..." \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"1.0"}}}'
+```
+
+Both endpoints return `401` with no token or an unrecognized/revoked one — that's the
+bearer-auth enforcement, not a bug. The old `/api/read` and `/api/scan` stay intentionally
+open (IP-rate-limited) since they power the public, no-login Playground and ReadScan widgets.
+
+---
+
 ## What's real vs. what's next
 
 | Piece | Status |
@@ -105,8 +138,8 @@ Point its DNS at Vercel per their dashboard instructions, then update
 | Google + magic-link login | ✅ real via Supabase Auth |
 | Dashboard (reads, stats) | ✅ real Supabase data, per-user, RLS-protected |
 | API key issuance/revocation | ✅ real (hashed storage, shown once) |
-| Bearer-auth on the public API | ⏳ keys are issued but not yet enforced on `/api/read` — see PROJECT.md roadmap |
-| MCP server | ⏳ not built yet — the engine (`src/lib/engine/read.ts`) is ready to wrap |
+| Bearer-auth on the public API (`/api/v1/read`) | ✅ real — requires `Authorization: Bearer sk-ar-...`, 401s otherwise, 60 req/min per key |
+| MCP server (`/api/mcp`) | ✅ real — remote Streamable HTTP MCP server, `read_url` + `score_url` tools, same bearer-auth |
 | Serve middleware (Layer 2) | ⏳ not built yet |
 | Billing / Stripe | ⏳ not built yet |
 

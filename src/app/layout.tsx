@@ -9,8 +9,23 @@ const inter = Inter({ variable: "--font-body", subsets: ["latin"] });
 const sora = Sora({ variable: "--font-display", subsets: ["latin"], weight: ["600", "700", "800"] });
 const mono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"] });
 
+/**
+ * `NEXT_PUBLIC_SITE_URL` was never set on Netlify, so metadataBase silently fell back to
+ * localhost — every shared link's og:image/twitter:image pointed at localhost:3000 in
+ * production. Netlify (and Vercel) both auto-inject their own env vars with the site's real
+ * URL at build time, so use those as a self-healing fallback instead of trusting one
+ * manually-set var — an explicit NEXT_PUBLIC_SITE_URL still always wins if set.
+ */
+function resolveSiteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.URL) return process.env.URL; // Netlify: primary site URL
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(resolveSiteUrl()),
   title: "AgentRead — Make your website readable to AI agents",
   description:
     "AgentRead serves every AI agent clean, scored Markdown — same content, 100x fewer tokens, one line of middleware.",

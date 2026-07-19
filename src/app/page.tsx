@@ -1172,7 +1172,10 @@ export const config = { matcher: "/:path*" };`,
           </div>
           <div className="footer-bottom">
             <span>© {new Date().getFullYear()} AgentRead — Read + Serve are real and running; Act is roadmap.</span>
-            <span>Built for the agent economy.</span>
+            <span style={{ display: "flex", gap: 16 }}>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/terms">Terms</Link>
+            </span>
           </div>
         </div>
       </footer>

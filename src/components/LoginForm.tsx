@@ -8,9 +8,12 @@ export default function LoginForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const supabase = createClient();
-
+  // Created lazily inside each handler, not at the top of the component body — this
+  // component is server-rendered before hydration, and constructing the client eagerly
+  // would run createBrowserClient() during SSR, throwing there if Supabase env vars are
+  // unset (the handlers below only ever run in the browser, never during SSR).
   async function signInWithGoogle() {
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -26,6 +29,7 @@ export default function LoginForm() {
   async function sendMagicLink(e: React.FormEvent) {
     e.preventDefault();
     setStatus("sending");
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {

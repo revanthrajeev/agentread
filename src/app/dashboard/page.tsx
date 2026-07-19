@@ -3,16 +3,28 @@ import { createClient } from "@/lib/supabase/server";
 import ApiKeysPanel from "@/components/ApiKeysPanel";
 import ReadsChart from "@/components/site/ReadsChart";
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+// A Supabase connection failure is treated the same as "not signed in" — a redirect to
+// /login, never a hard crash on an authenticated-only page.
+async function resolveSession() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return { supabase, user };
+  } catch (err) {
+    console.error("[dashboard] failed to resolve auth session:", err);
+    return { supabase: null, user: null };
+  }
+}
 
+export default async function DashboardPage() {
   // Belt-and-suspenders: proxy.ts already gates /dashboard, but every server
   // entry point re-checks auth itself per Next.js's own guidance — a matcher
   // change in proxy.ts should never silently expose this page.
-  if (!user) {
+  const { supabase, user } = await resolveSession();
+
+  if (!user || !supabase) {
     redirect("/login?next=/dashboard");
   }
 

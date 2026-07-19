@@ -75,20 +75,40 @@ git push -u origin main
 
 ---
 
-## 4. Deploy (Vercel — free)
+## 4. Deploy (Vercel or Netlify — free)
 
-1. [vercel.com/new](https://vercel.com/new) → import your GitHub repo.
-2. In **Environment Variables**, add the same four from `.env.local`:
+Whichever platform you use, set environment variables in **that platform's own dashboard** —
+they are never read from `.env.local` or from GitHub, so this step is required even though
+the repo is already pushed.
+
+1. Import your GitHub repo (Vercel: [vercel.com/new](https://vercel.com/new). Netlify:
+   [app.netlify.com](https://app.netlify.com) → "Import an existing project").
+2. Add these environment variables (same names as `.env.local`):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` → mark it **Sensitive** in Vercel's dashboard
-   - `NEXT_PUBLIC_SITE_URL` → set this to your real Vercel URL, e.g. `https://agentread.vercel.app`
+   - `SUPABASE_SERVICE_ROLE_KEY` → mark it **Sensitive**/secret in the dashboard
+   - `NEXT_PUBLIC_SITE_URL` → your real deployed URL, e.g. `https://agentread.vercel.app`
+     or `https://agentread.netlify.app`
+   - `INTERNAL_SERVE_SECRET` → any long random string (e.g. `openssl rand -hex 32`), used
+     only to authenticate proxy.ts's own server-to-server call to `/api/internal/serve`
+     (see "Serve middleware architecture" below). If this is missing, Serve silently
+     disables itself rather than breaking the site — crawlers just get the normal page.
 3. Deploy.
 4. Back in Supabase **Authentication → URL Configuration**, add your production URL to both
    Site URL and Redirect URLs (`https://yourdomain.com/auth/callback`).
 5. Back in Google Cloud Console, add the production callback URL to the OAuth client's
    Authorized redirect URIs too (Supabase's callback URL doesn't change, so this step is
    usually already done — but double check).
+
+### Serve middleware architecture (why there's an internal API route)
+
+`src/proxy.ts` (Next.js Middleware) gets bundled as an **Edge Function** by both Vercel's and
+Netlify's adapters. The Serve middleware's actual work — fetch, Mozilla Readability, Turndown
+— depends on `jsdom`, which is Node-native and cannot run in that sandbox (this failed a real
+Netlify build with `Failed to load external module jsdom`). So `proxy.ts` only does the cheap,
+edge-safe part (User-Agent detection) and makes a network call to `/api/internal/serve` — a
+normal Node.js-runtime route — which does the actual jsdom-based extraction. That route is
+locked behind `INTERNAL_SERVE_SECRET` since it isn't part of the public API.
 
 ---
 

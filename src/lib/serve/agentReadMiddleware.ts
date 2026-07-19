@@ -1,14 +1,17 @@
 import type { NextRequest } from "next/server";
-import { readUrl } from "@/lib/engine/read";
 import { detectCrawler } from "./crawlers";
 
 const EXCLUDED_PREFIXES = ["/api/", "/_next/", "/auth/"];
 
 /**
  * Layer 2 — Serve. Humans get the site unchanged; requests from known AI crawlers get the
- * same clean Markdown the Read API produces, instead of full page HTML. This is the same
- * engine as /api/v1/read — a crawler hit triggers a real (cached, 10 min TTL) fetch-and-distill
- * of the requested URL, not a canned response.
+ * same clean Markdown the Read API produces, instead of full page HTML.
+ *
+ * This function must stay free of any Node-native dependency (jsdom, Readability, Turndown):
+ * proxy.ts is bundled as an Edge Function on Netlify, which cannot load jsdom (confirmed via
+ * a real "Failed to load external module jsdom" build failure). The actual fetch-and-distill
+ * work happens in /api/internal/serve, a normal Node.js-runtime route — this function just
+ * detects the crawler (cheap, edge-safe) and makes a network call to that route.
  *
  * Returns a markdown Response to short-circuit the request, or null to let it continue normally.
  */
@@ -22,8 +25,24 @@ export async function serveMarkdownToCrawlers(request: NextRequest): Promise<Res
   const crawler = detectCrawler(request.headers.get("user-agent"));
   if (!crawler) return null;
 
+  const secret = process.env.INTERNAL_SERVE_SECRET;
+  if (!secret) return null; // Serve layer not configured — fall through, never block the page
+
   try {
-    const result = await readUrl(request.url);
+    const internalUrl = new URL("/api/internal/serve", request.nextUrl.origin);
+    const res = await fetch(internalUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-internal-secret": secret },
+      body: JSON.stringify({ url: request.url }),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!res.ok) throw new Error(`Internal serve route responded ${res.status}`);
+    const result = (await res.json()) as {
+      markdown: string;
+      readScore: number;
+      hallucinationRisk: string;
+    };
+
     return new Response(result.markdown, {
       status: 200,
       headers: {

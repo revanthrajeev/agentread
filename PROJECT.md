@@ -59,9 +59,10 @@ Three layers, one engine:
 - **Layer 1 — Read** *(live today)*: REST API (`/api/v1/read`) + a remote MCP server
   (`/api/mcp`, Streamable HTTP). Any developer or agent can POST a URL — or call the
   `read_url`/`score_url` MCP tools directly — and get back Markdown + ReadScore + risk flags.
-- **Layer 2 — Serve** *(next)*: one line of Next.js middleware that serves this same
-  clean Markdown directly to verified AI crawlers (GPTBot, ClaudeBot, PerplexityBot),
-  while human visitors see the site completely unchanged.
+- **Layer 2 — Serve** *(live today)*: Next.js middleware that serves this same clean
+  Markdown directly to verified AI crawlers (GPTBot, ClaudeBot, PerplexityBot, and others),
+  while human visitors see the site completely unchanged. This site runs the middleware on
+  itself — dogfooded, not hypothetical.
 - **Layer 3 — Act** *(future)*: once a site's structure is clean and scored, agents can
   transact against it directly — semantic "buy," "book," "subscribe" — instead of
   scraping pixels.
@@ -111,11 +112,12 @@ and the risk in the same sentence. Say both.*
 | Clean HTML → Markdown | ✅ | ✅ (145K+ GitHub stars, funded) | — | edge-native, partial |
 | Explainable readability score | ✅ | — | — | — |
 | Hallucination risk flags | ✅ | — | — | — |
-| Serve *your own* site to agents | roadmap | — | — | infra-level only |
+| Serve *your own* site to agents | ✅ any host | — | — | infra-level only |
 | Browser action / "Act" | roadmap | partial | ✅ | — |
 
 **Honest read:** Firecrawl already owns the "read someone else's site" wedge, with funding
 and scale AgentRead does not have. The differentiated, defensible bet is **Layer 2 (Serve)**
+— now genuinely live, not just a roadmap slide —
 and the **ReadScore standard** — becoming "the Lighthouse of agent readability" — not
 out-scraping an incumbent scraper.
 
@@ -195,7 +197,8 @@ signal by early-stage investors — it reads as founder maturity, not weakness.*
 - ✅ Google/email auth, dashboard, API key management (live)
 - ✅ Bearer-token auth enforcement on the public API (`/api/v1/read`)
 - ✅ MCP server (`read_url`, `score_url` live at `/api/mcp`; `batch`, `map_site`, `extract_data` still to come)
-- ⏳ Serve middleware for Next.js (Layer 2)
+- ✅ Serve middleware for Next.js (Layer 2) — dogfooded on this site itself
+- ✅ Full design-system rebuild (glass-morphism UI, Three.js hero, real data throughout — merged in from the earlier static concept site, which is now retired)
 - ⏳ Crawl, Watch (change detection), llms.txt Studio, agent-traffic analytics
 - ⏳ Pay-per-crawl monetization for publishers
 - 🔭 Act layer — semantic agent transactions (long-term)

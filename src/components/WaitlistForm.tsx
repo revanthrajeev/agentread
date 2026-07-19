@@ -24,26 +24,28 @@ export default function WaitlistForm() {
   }
 
   if (status === "done") {
-    return <p className="mt-6 text-emerald-400">You're on the list — we'll email you.</p>;
+    return <p className="mt-6 font-medium" style={{ color: "var(--st-good)" }}>You&apos;re on the list — we&apos;ll email you.</p>;
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:flex-row">
+    <form onSubmit={submit} className="email-form">
       <input
         type="email"
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@company.com"
-        className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-violet-400"
+        aria-label="Email address"
+        className="email-input"
       />
-      <button
-        disabled={status === "loading"}
-        className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
-      >
+      <button disabled={status === "loading"} className="btn btn-primary magnetic">
         {status === "loading" ? "Joining…" : "Join waitlist"}
       </button>
-      {status === "error" && <p className="text-sm text-red-400 sm:ml-3 sm:self-center">Something went wrong.</p>}
+      {status === "error" && (
+        <p className="text-sm sm:ml-3 sm:self-center" style={{ color: "var(--st-critical)" }}>
+          Something went wrong.
+        </p>
+      )}
     </form>
   );
 }

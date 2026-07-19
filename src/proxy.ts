@@ -1,7 +1,11 @@
 import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { serveMarkdownToCrawlers } from "@/lib/serve/agentReadMiddleware";
 
 export async function proxy(request: NextRequest) {
+  const markdownResponse = await serveMarkdownToCrawlers(request);
+  if (markdownResponse) return markdownResponse;
+
   return await updateSession(request);
 }
 

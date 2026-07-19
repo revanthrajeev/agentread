@@ -1,6 +1,6 @@
 # AgentRead — Build Status
 
-*What exists, what's real, what's left. Written 2026-07-06.*
+*What exists, what's real, what's left. Written 2026-07-06, updated 2026-07-19.*
 
 ---
 
@@ -8,16 +8,19 @@
 
 AgentRead is a working Next.js + Supabase application, not a mockup. The core product —
 fetch a URL, extract it, score its AI-agent readability — runs for real on every request.
-Auth, database, and a functional dashboard are wired end-to-end. What remains is
-infrastructure setup (a live Supabase project, a Google OAuth client, a GitHub remote,
-a deployment) and the next layer of features (Serve middleware, MCP server, billing).
+Auth, database, a functional dashboard, a bearer-auth Read API, a remote MCP server, and
+Serve middleware (Layer 2) are all wired end-to-end and verified. What remains is
+infrastructure setup (a live Supabase project, a deployment) and the next layer of
+features (Crawl, Watch, billing).
 
-Two things exist in the project history:
-
-1. **`onto-website/`** — the original static HTML/CSS/JS concept demo (all data simulated).
-   Kept for reference; superseded by the app below for anything called "production."
-2. **`agentread-app/`** — the real MVP. This is the one to keep building on and the one
-   this status file describes.
+**2026-07-19 — design system + Serve middleware merge.** The original static concept demo
+(`onto-website/`, all data simulated) has been fully merged into this app and retired —
+its visual design (glass-morphism, dark/light theme + 4 accent presets, animated stats,
+comparison table, pricing, FAQ) is now real React/Tailwind components here, wired to real
+data throughout (no fabricated stats; unbuilt features are clearly tagged "Roadmap," not
+implied to exist). A Three.js particle scene (`src/components/site/SiteCanvas.tsx`) was
+added as a scroll-reactive hero/background layer. This is the only version of AgentRead
+going forward.
 
 ---
 
@@ -36,9 +39,19 @@ Two things exist in the project history:
 | **API key issuance** | Keys are generated, sha-256 hashed before storage (plaintext is shown exactly once at creation and never persisted or retrievable again), and revocable. |
 | **`/api/v1/read`** | The authenticated public Read API. Requires `Authorization: Bearer sk-ar-...`; 401s on missing/invalid/revoked keys. 60 req/min per key (vs. 10/min/IP on the anonymous playground endpoint). Verifies the key by sha-256 lookup against `api_keys` via a service-role Supabase client (`src/lib/supabase/admin.ts`) — necessary because a bearer-token caller has no session cookie to satisfy the RLS `auth.uid()` policies. Persists every read to `reads` under the key owner's `user_id` and best-effort updates `last_used_at`. |
 | **`/api/mcp`** | A real remote MCP server (Streamable HTTP transport, stateless — fresh `McpServer` + transport per request, matching serverless execution) exposing `read_url` and `score_url` tools, gated by the same bearer-auth as `/api/v1/read`. Point any MCP client (Claude, ChatGPT connectors, custom agents) at this URL with an AgentRead API key. |
-| **Landing page** | Live ReadScan widget calling the real API (not demo data), a working waitlist form, and a feature summary that describes only what's actually built. |
-| **Docs page** | Publishes the ReadScore methodology in full — every scoring rule is documented, not hidden. |
-| **Production build** | `npm run build` compiles clean with no type errors. |
+| **Serve middleware (Layer 2)** | `src/lib/serve/agentReadMiddleware.ts`, wired into `src/proxy.ts`. Detects known AI-crawler User-Agents (GPTBot, ClaudeBot, PerplexityBot, and others — `src/lib/serve/crawlers.ts`) and serves them the real distilled Markdown (same engine as `/api/v1/read`) instead of full page HTML; everyone else gets the page unchanged. **This site runs its own Serve middleware on itself** — verified via `curl -A "GPTBot/1.1" https://<deployed-url>/` returning `content-type: text/markdown` with `x-readscore`/`x-agentread-crawler` headers. |
+| **Landing page** | Live ReadScan widget calling the real API (not demo data), a working waitlist form, a real aggregate-stats query (`src/lib/stats.ts` — total reads, avg ReadScore across all users, honest "just launched" state when empty), and a full design-system rebuild (glass-morphism, dark/light theme + accent picker, Three.js hero canvas, comparison table, pricing, FAQ) — every "Roadmap" tag is real, not a single fabricated stat. |
+| **Playground** | Reskinned with a real animated ReadScore gauge and risk-flag cards, fed entirely by the real `/api/read` response — including a real raw-HTML snippet (`ReadResult.htmlSnippet`, added this session) shown side-by-side with the real Markdown output. |
+| **Dashboard** | Reskinned with real per-user KPI tiles and a real "reads per day" chart (`src/components/site/ReadsChart.tsx`) computed from the signed-in user's actual `reads` rows — empty state shown honestly when there's no data yet, never a fake chart. |
+| **Docs page** | Publishes the ReadScore methodology in full, documents only real endpoints (`/api/v1/read`, `/api/mcp`, `/api/read`, `/api/scan`, Serve), and lists everything else under a clearly separate "Roadmap" section rather than documenting unbuilt endpoints as if callable today. |
+| **Production build** | `npm run build` and `npm run lint` both compile/pass clean with zero errors and zero warnings. |
+
+**Bug fixed this session:** `proxy.ts` was sitting at the repo root, but this project uses
+a `src/app` layout — Next.js was silently never registering it as middleware at all (confirmed
+via an empty `functions: {}` in the build's middleware manifest before the fix). The
+`/dashboard` auth-gate "worked" only because of the page-level defense-in-depth check;
+the proxy-level gate had likely never actually run. Fixed by moving it to `src/proxy.ts` —
+confirmed via build output now showing `ƒ Proxy (Middleware)` as a registered route.
 
 ---
 
@@ -61,10 +74,10 @@ step by step in `SETUP.md`.
 ## 🔭 Not built yet (real product roadmap, not infrastructure)
 
 - More MCP tools: `batch`, `map_site`, `extract_data` (`read_url` and `score_url` are live — see above)
-- Serve middleware (Layer 2 — one-line Next.js middleware serving Markdown to verified AI crawlers from a site owner's own domain)
 - Crawl (whole-domain corpus), Watch (change-detection webhooks), llms.txt Studio, agent-traffic analytics
 - Pay-per-crawl monetization for publishers
 - Billing/Stripe integration
+- A published `@agentread/node`/`@agentread/next` npm package (the Serve middleware code is real today, just not packaged — see `/docs`)
 - Act layer (long-term — semantic agent transactions)
 
 ---
@@ -73,19 +86,23 @@ step by step in `SETUP.md`.
 
 ```
 agentread-app/
-├── SETUP.md              ← step-by-step: Supabase, Google OAuth, GitHub, deploy
-├── PROJECT.md             ← pitch-deck source doc — paste into Gamma AI
-├── STATUS.md              ← this file
-├── supabase/schema.sql    ← full database schema, paste into Supabase SQL Editor
+├── SETUP.md                        ← step-by-step: Supabase, Google OAuth, GitHub, deploy
+├── PROJECT.md                      ← pitch-deck source doc — paste into Gamma AI
+├── STATUS.md                       ← this file
+├── supabase/schema.sql             ← full database schema, paste into Supabase SQL Editor
 ├── src/
-│   ├── lib/engine/read.ts       ← the real extraction + scoring engine
-│   ├── lib/supabase/            ← auth client/server/proxy helpers
-│   ├── app/api/                 ← /read, /scan, /waitlist route handlers
-│   ├── app/dashboard/           ← real dashboard + API key management
-│   ├── app/playground/          ← live Read API demo page
-│   ├── app/login/               ← Google + magic-link sign-in
-│   └── app/page.tsx              ← landing page with live ReadScan widget
-└── proxy.ts               ← auth session refresh + /dashboard route gate
+│   ├── proxy.ts                    ← Next.js middleware: auth session refresh + Serve crawler gate
+│   ├── lib/engine/read.ts          ← the real extraction + scoring engine
+│   ├── lib/serve/                  ← Serve middleware (Layer 2) + crawler UA list
+│   ├── lib/supabase/               ← auth client/server/middleware + admin (service-role) helpers
+│   ├── lib/stats.ts                ← real public aggregate stats for the landing page
+│   ├── components/site/            ← design-system primitives: SiteCanvas (Three.js), Reveal,
+│   │                                  CountUp, Gauge, ReadsChart, CodeTabs, ThemeAccentToggle, …
+│   ├── app/api/                    ← /read, /scan, /v1/read, /mcp, /waitlist route handlers
+│   ├── app/dashboard/               ← real dashboard + API key management + real chart
+│   ├── app/playground/             ← live Read API demo page
+│   ├── app/login/                  ← Google + magic-link sign-in
+│   └── app/page.tsx                ← landing page: 3D hero, real stats, live/roadmap labeling
 ```
 
 ---

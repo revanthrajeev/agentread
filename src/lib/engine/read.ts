@@ -13,6 +13,8 @@ export interface ReadResult {
   url: string;
   markdown: string;
   title: string;
+  /** First ~2000 chars of the raw fetched HTML — real bytes, not a placeholder, for side-by-side display. */
+  htmlSnippet: string;
   htmlBytes: number;
   markdownBytes: number;
   tokensBefore: number;
@@ -85,7 +87,6 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
     /price|buy now|add to cart/i.test(html);
   const hasDisabledCta = /disabled[^>]*>[^<]*(buy|checkout|add to cart)/i.test(html);
   const hasLazyContent = /loading=["']lazy["']|data-lazy|IntersectionObserver/i.test(html);
-  const hasNoLlmsTxt = true; // real check requires a second fetch of /llms.txt — done below
 
   let llmsTxtExists = false;
   try {
@@ -170,6 +171,7 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
     url,
     markdown,
     title,
+    htmlSnippet: html.slice(0, 2000),
     htmlBytes,
     markdownBytes,
     tokensBefore,

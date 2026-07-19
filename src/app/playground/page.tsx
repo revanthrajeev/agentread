@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import CopyButton from "@/components/site/CopyButton";
+import Gauge from "@/components/site/Gauge";
 
 interface ReadResult {
   url: string;
   title: string;
   markdown: string;
+  htmlSnippet: string;
   htmlBytes: number;
   markdownBytes: number;
   tokensBefore: number;
@@ -17,21 +20,27 @@ interface ReadResult {
   cache: "HIT" | "MISS";
 }
 
+const PRESETS = [
+  { label: "🛍 E-commerce", url: "https://stripe.com/pricing" },
+  { label: "📰 Article", url: "https://en.wikipedia.org/wiki/Artificial_intelligence" },
+  { label: "📚 SaaS docs", url: "https://nextjs.org/docs" },
+];
+
 export default function PlaygroundPage() {
-  const [url, setUrl] = useState("https://en.wikipedia.org/wiki/Web_scraping");
+  const [url, setUrl] = useState(PRESETS[0].url);
+  const [activePreset, setActivePreset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ReadResult | null>(null);
   const [error, setError] = useState("");
 
-  async function run(e: React.FormEvent) {
-    e.preventDefault();
+  async function run(targetUrl: string) {
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: targetUrl }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Read failed");
@@ -43,97 +52,145 @@ export default function PlaygroundPage() {
     }
   }
 
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setActivePreset(-1);
+    run(url);
+  }
+
+  const savingsUsd = result ? ((result.tokensBefore - result.tokensAfter) / 1_000_000) * 3 : 0;
+
   return (
-    <main className="mx-auto max-w-5xl px-6 py-14">
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Playground</h1>
-      <p className="mt-2 text-neutral-400">
-        Real Read API call — enter any public URL. Rate-limited to 10 reads/min per IP; sign in to save history.
-      </p>
+    <>
+      <header className="pg-hero container">
+        <span className="badge">
+          <span className="dot" /> Live — real Read API, 10 reads/min per IP
+        </span>
+        <h1 className="hero-title" style={{ fontSize: "clamp(34px,4.6vw,54px)" }}>
+          See what agents <span className="grad-text">actually see.</span>
+        </h1>
+        <p className="hero-sub">
+          Pick a sample page (or paste any URL) and watch AgentRead turn browser soup into
+          scored, agent-ready Markdown — for real, on every request.
+        </p>
 
-      <form onSubmit={run} className="mt-6 flex gap-3">
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-violet-400"
-          placeholder="https://example.com"
-        />
-        <button
-          disabled={loading}
-          className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          {loading ? "Reading…" : "Read & score →"}
-        </button>
-      </form>
-
-      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
-
-      {result && (
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="mb-3 flex items-center justify-between text-xs text-neutral-400">
-              <span>OUTPUT MARKDOWN</span>
-              <span>{(result.markdownBytes / 1024).toFixed(1)} KB · {result.cache}</span>
-            </div>
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap font-[family-name:var(--font-mono)] text-xs text-neutral-300">
-              {result.markdown}
-            </pre>
-          </div>
-
-          <div className="space-y-5">
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 text-center">
-              <p className="text-xs text-neutral-400">ReadScore</p>
-              <p className="mt-1 font-[family-name:var(--font-display)] text-5xl font-extrabold">
-                {result.readScore}
-                <span className="text-lg text-neutral-500"> /100</span>
-              </p>
-              <p className="mt-2 text-sm text-neutral-400">risk: {result.hallucinationRisk}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Stat label="HTML → MD" value={`${(result.htmlBytes / 1024).toFixed(0)}K → ${(result.markdownBytes / 1024).toFixed(1)}K`} />
-              <Stat label="Tokens" value={`${result.tokensAfter.toLocaleString()}`} sub={`was ${result.tokensBefore.toLocaleString()}`} />
-              <Stat label="Reduction" value={`${(100 - (result.markdownBytes / result.htmlBytes) * 100).toFixed(1)}%`} />
-              <Stat label="Latency" value={`${result.latencyMs} ms`} />
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
-              <p className="mb-3 text-xs font-semibold text-neutral-400">
-                {result.flags.length} signal{result.flags.length !== 1 ? "s" : ""}
-              </p>
-              <ul className="space-y-2 text-xs">
-                {result.flags.map((f, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span
-                      className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 font-bold uppercase ${
-                        f.severity === "high"
-                          ? "bg-red-500/15 text-red-400"
-                          : f.severity === "medium"
-                          ? "bg-amber-500/15 text-amber-400"
-                          : f.severity === "low"
-                          ? "bg-yellow-500/10 text-yellow-400"
-                          : "bg-emerald-500/15 text-emerald-400"
-                      }`}
-                    >
-                      {f.severity}
-                    </span>
-                    <span className="text-neutral-300">{f.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+        <div className="preset-row">
+          {PRESETS.map((p, i) => (
+            <button
+              key={p.url}
+              type="button"
+              className={`preset-btn ${activePreset === i ? "active" : ""}`}
+              onClick={() => {
+                setUrl(p.url);
+                setActivePreset(i);
+                run(p.url);
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
-      )}
-    </main>
-  );
-}
+        <form className="pg-url-row" onSubmit={onSubmit}>
+          <input
+            className="scan-input"
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            spellCheck={false}
+            aria-label="URL to read"
+          />
+          <button className="btn btn-primary magnetic" disabled={loading} type="submit">
+            {loading ? "Reading…" : "Read & score"} <span className="arr">→</span>
+          </button>
+        </form>
+        {error && (
+          <p style={{ color: "var(--st-critical)", marginTop: 16, fontSize: 14 }}>{error}</p>
+        )}
+      </header>
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-      <p className="text-xs text-neutral-400">{label}</p>
-      <p className="mt-1 font-[family-name:var(--font-display)] text-xl font-bold">{value}</p>
-      {sub && <p className="text-xs text-neutral-500">{sub}</p>}
-    </div>
+      <main className="container" style={{ paddingBottom: 100 }}>
+        {result && (
+          <>
+            <div className="split">
+              <div className="pane glass pane-bad">
+                <div className="pane-head">
+                  <span>RAW HTML — what agents get without AgentRead</span>
+                  <span className="kb">{(result.htmlBytes / 1024).toFixed(0)} KB</span>
+                </div>
+                <div className="pane-body">{result.htmlSnippet}…</div>
+              </div>
+              <div className="pane glass pane-good">
+                <div className="pane-head">
+                  <span>CLEAN MARKDOWN — with AgentRead</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <CopyButton text={result.markdown} style={{ position: "static" }} />
+                    <span className="kb">{(result.markdownBytes / 1024).toFixed(1)} KB</span>
+                  </span>
+                </div>
+                <div className="pane-body">{result.markdown}</div>
+              </div>
+            </div>
+
+            <div className="scorecard">
+              <Gauge score={result.readScore} />
+              <div className="risk-card glass">
+                <h3>
+                  Hallucination risk flags{" "}
+                  <span className="tag tag-live" style={{ marginLeft: 6 }}>
+                    {result.flags.length}
+                  </span>
+                </h3>
+                <div className="risk-list">
+                  {result.flags.map((f, i) => (
+                    <div className="risk-item" key={i}>
+                      <span className={`sev sev-${f.severity}`}>{f.severity}</span>
+                      <p>{f.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pg-kvs">
+              <div className="stat-tile glass">
+                <div className="stat-label">Payload</div>
+                <div className="stat-value" style={{ fontSize: 24 }}>
+                  {(result.htmlBytes / 1024).toFixed(0)}K → {(result.markdownBytes / 1024).toFixed(1)}K
+                </div>
+                <div className="stat-sub">
+                  {(100 - (result.markdownBytes / result.htmlBytes) * 100).toFixed(1)}% reduction
+                </div>
+              </div>
+              <div className="stat-tile glass">
+                <div className="stat-label">Tokens per read</div>
+                <div className="stat-value" style={{ fontSize: 24 }}>
+                  {result.tokensAfter.toLocaleString()}
+                </div>
+                <div className="stat-sub">was {result.tokensBefore.toLocaleString()}</div>
+              </div>
+              <div className="stat-tile glass">
+                <div className="stat-label">Input-token savings</div>
+                <div className="stat-value" style={{ fontSize: 24 }}>
+                  ${savingsUsd > 0 && savingsUsd < 0.01 ? "<0.01" : savingsUsd.toFixed(2)}
+                </div>
+                <div className="stat-sub">at $3 / M input tokens</div>
+              </div>
+              <div className="stat-tile glass">
+                <div className="stat-label">Read latency</div>
+                <div className="stat-value" style={{ fontSize: 24 }}>
+                  {result.latencyMs} ms
+                </div>
+                <div className="stat-sub">{result.cache}</div>
+              </div>
+            </div>
+
+            <p className="demo-note">
+              Real request, real response — this is the exact output of{" "}
+              <span className="mono">POST /api/read</span>.
+            </p>
+          </>
+        )}
+      </main>
+    </>
   );
 }

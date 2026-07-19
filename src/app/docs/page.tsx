@@ -1,85 +1,322 @@
+import CodeTabs from "@/components/site/CodeTabs";
+
 export default function DocsPage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-14">
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Docs</h1>
+    <div className="container docs-layout">
+      <aside className="docs-side">
+        <div className="side-group">
+          <div className="side-title">Getting started</div>
+          <a className="side-link" href="#quickstart">Quickstart</a>
+          <a className="side-link" href="#auth">Authentication</a>
+          <a className="side-link" href="#mcp">MCP server</a>
+        </div>
+        <div className="side-group">
+          <div className="side-title">Read API · Layer 1</div>
+          <a className="side-link" href="#read">POST /api/v1/read</a>
+          <a className="side-link" href="#scan">POST /api/scan (free)</a>
+        </div>
+        <div className="side-group">
+          <div className="side-title">Serve · Layer 2</div>
+          <a className="side-link" href="#serve">Next.js middleware</a>
+        </div>
+        <div className="side-group">
+          <div className="side-title">Reference</div>
+          <a className="side-link" href="#readscore">ReadScore formula</a>
+          <a className="side-link" href="#limits">Rate limits</a>
+          <a className="side-link" href="#roadmap">Roadmap</a>
+        </div>
+      </aside>
 
-      <Section title="Quickstart">
-        <p>Two free, no-auth endpoints power the site&apos;s own demos:</p>
-        <Code>{`POST /api/scan   { "url": "https://example.com" }   → score only, no auth
-POST /api/read   { "url": "https://example.com" }   → full markdown + score, 10 req/min per IP`}</Code>
-        <p>For programmatic access, issue an API key in the dashboard and use the authenticated Read API:</p>
-        <Code>{`POST /api/v1/read
-Authorization: Bearer sk-ar-...
-{ "url": "https://example.com" }   → full markdown + score, 60 req/min per key, persisted to your dashboard`}</Code>
-      </Section>
-
-      <Section title="MCP server">
-        <p>
-          A remote MCP server is live at <code className="rounded bg-white/10 px-1">/api/mcp</code> —
-          add it to any MCP-capable client (Claude, ChatGPT connectors, custom agents) with the same
-          API key as the bearer token. Exposes two tools:
-        </p>
-        <ul className="list-disc space-y-1 pl-5">
-          <li><code className="rounded bg-white/10 px-1">read_url</code> — full markdown + ReadScore + flags</li>
-          <li><code className="rounded bg-white/10 px-1">score_url</code> — score + flags only, cheaper when content isn&apos;t needed</li>
-        </ul>
-      </Section>
-
-      <Section title="Response shape">
-        <Code>{`{
+      <main className="docs-main">
+        <section className="doc-section" id="quickstart">
+          <h2>
+            Quickstart <span className="tag tag-live">Live</span>
+          </h2>
+          <p>Two commands from zero to your first scored, agent-ready read.</p>
+          <h3>1 · Get a key</h3>
+          <p>
+            Create an account and issue a key in the <a href="/dashboard" style={{ color: "var(--accent-strong)" }}>dashboard</a> —
+            the free tier includes 1,000 reads a month, no card required.
+          </p>
+          <h3>2 · Read a page</h3>
+          <pre className="doc-code">
+            <span className="t-prompt">$</span> curl <span className="t-flag">-X POST</span> https://agentread.dev/api/v1/read \{"\n"}
+            {"  "}
+            <span className="t-flag">-H</span> <span className="t-str">&quot;Authorization: Bearer $AGENTREAD_API_KEY&quot;</span> \{"\n"}
+            {"  "}
+            <span className="t-flag">-H</span> <span className="t-str">&quot;Content-Type: application/json&quot;</span> \{"\n"}
+            {"  "}
+            <span className="t-flag">-d</span> <span className="t-str">&apos;{"{"}&quot;url&quot;: &quot;https://example.com/pricing&quot;{"}"}&apos;</span>
+          </pre>
+          <h3>3 · Use the result</h3>
+          <pre className="doc-code">
+            {`{
   "url": "https://example.com/pricing",
   "title": "Pricing",
-  "markdown": "# Pricing\\n\\n...",
+  "markdown": "# Pricing\\n\\n…",
   "readScore": 82,
   "hallucinationRisk": "low",
-  "flags": [{ "severity": "low", "text": "..." }],
+  "flags": [],
   "htmlBytes": 812000,
   "markdownBytes": 8100,
   "tokensBefore": 203114,
   "tokensAfter": 1942,
   "latencyMs": 84,
   "cache": "MISS"
-}`}</Code>
-      </Section>
+}`}
+          </pre>
+          <p>
+            Feed <code>markdown</code> to your model; branch on <code>hallucinationRisk</code> before
+            you let an agent quote a price. These are the real field names the engine returns —
+            not a simplified example.
+          </p>
+        </section>
 
-      <Section title="How ReadScore is computed">
-        <p>
-          Fully transparent — starts at 100, then deducts for: low payload reduction, high script
-          count (&gt;25 tags), price/CTA text present in raw HTML but absent from extracted text
-          (JS-only rendering), disabled buy/checkout buttons in markup, lazy-loaded content, and a
-          missing <code className="rounded bg-white/10 px-1">/llms.txt</code>. Every deduction ships
-          as a human-readable flag alongside the score.
-        </p>
-      </Section>
+        <section className="doc-section" id="auth">
+          <h2>
+            Authentication <span className="tag tag-live">Live</span>
+          </h2>
+          <p>
+            Bearer tokens, issued per account from the dashboard. Keys start with{" "}
+            <code>sk-ar-</code>, are sha-256 hashed at rest, and are shown in full exactly once at
+            creation.
+          </p>
+          <pre className="doc-code">Authorization: Bearer sk-ar-…</pre>
+          <p>
+            <code>/api/v1/read</code> and <code>/api/mcp</code> require this header and 401 without
+            it. The free <code>/api/read</code> and <code>/api/scan</code> endpoints (used by this
+            site&apos;s own Playground/ReadScan widgets) stay open, IP-rate-limited instead.
+          </p>
+        </section>
 
-      <Section title="Rate limits">
-        <p>10 reads/minute per IP on the public playground (<code className="rounded bg-white/10 px-1">/api/read</code>, <code className="rounded bg-white/10 px-1">/api/scan</code>). 60 reads/minute per API key on the authenticated API and MCP server.</p>
-      </Section>
+        <section className="doc-section" id="mcp">
+          <h2>
+            MCP server <span className="tag tag-live">Live</span>
+          </h2>
+          <p>
+            A real remote MCP server (Streamable HTTP) — no local install, no npx package. Add it
+            to any MCP-capable client with your API key as the bearer token:
+          </p>
+          <pre className="doc-code">
+            {`{
+  "mcpServers": {
+    "agentread": {
+      "url": "https://agentread.dev/api/mcp",
+      "headers": { "Authorization": "Bearer sk-ar-…" }
+    }
+  }
+}`}
+          </pre>
+          <h3>Exposed tools</h3>
+          <table className="param-table">
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>Status</th>
+                <th>What it does</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>read_url</td>
+                <td>
+                  <span className="tag tag-live">Live</span>
+                </td>
+                <td>URL → clean Markdown + ReadScore + flags</td>
+              </tr>
+              <tr>
+                <td>score_url</td>
+                <td>
+                  <span className="tag tag-live">Live</span>
+                </td>
+                <td>URL → ReadScore + flags only, no content</td>
+              </tr>
+              <tr>
+                <td>batch</td>
+                <td>
+                  <span className="tag tag-soon">Roadmap</span>
+                </td>
+                <td>Many URLs in one call</td>
+              </tr>
+              <tr>
+                <td>map_site</td>
+                <td>
+                  <span className="tag tag-soon">Roadmap</span>
+                </td>
+                <td>Domain → crawlable outline</td>
+              </tr>
+              <tr>
+                <td>extract_data</td>
+                <td>
+                  <span className="tag tag-soon">Roadmap</span>
+                </td>
+                <td>URL + schema → typed data</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
 
-      <Section title="Roadmap">
-        <ul className="list-disc space-y-1 pl-5">
-          <li>More MCP tools: batch, map_site, extract_data</li>
-          <li>Serve middleware (Next.js) for site owners</li>
-          <li>Crawl, Watch, llms.txt Studio, agent analytics</li>
-        </ul>
-      </Section>
-    </main>
-  );
+        <section className="doc-section" id="read">
+          <h2>
+            Read API <span className="tag tag-live">Live</span>
+          </h2>
+          <div className="endpoint-card glass">
+            <div className="endpoint-head">
+              <span className="method m-post">POST</span>
+              <span className="endpoint-path">/api/v1/read</span>
+            </div>
+            <p className="endpoint-desc">
+              Fetch, extract (Mozilla Readability), and convert a URL to Markdown (Turndown), with
+              a ReadScore attached. Requires bearer auth. 60 requests/min per key.
+            </p>
+            <table className="param-table">
+              <thead>
+                <tr>
+                  <th>Param</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    url<span className="req">required</span>
+                  </td>
+                  <td>string</td>
+                  <td>Page to read.</td>
+                </tr>
+                <tr>
+                  <td>fresh</td>
+                  <td>boolean</td>
+                  <td>Bypass the 10-minute in-memory cache.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="doc-section" id="scan">
+          <h2>
+            Free scan &amp; playground endpoints <span className="tag tag-live">Live</span>
+          </h2>
+          <div className="endpoint-card glass">
+            <div className="endpoint-head">
+              <span className="method m-post">POST</span>
+              <span className="endpoint-path">/api/scan</span>
+            </div>
+            <p className="endpoint-desc">
+              Score-only, no auth required — powers the homepage&apos;s free ReadScan tool. No
+              markdown or raw HTML in the response, just the score and flags.
+            </p>
+          </div>
+          <div className="endpoint-card glass">
+            <div className="endpoint-head">
+              <span className="method m-post">POST</span>
+              <span className="endpoint-path">/api/read</span>
+            </div>
+            <p className="endpoint-desc">
+              Full result (markdown + score + flags), no auth required, 10 requests/min per IP —
+              powers this site&apos;s own Playground. Persists to your history if you&apos;re signed in.
+            </p>
+          </div>
+        </section>
+
+        <section className="doc-section" id="serve">
+          <h2>
+            Serve middleware <span className="tag tag-live">Live</span>
+          </h2>
+          <p>
+            Humans get your site. Verified AI crawlers get the Markdown twin. No published npm
+            package yet, so this is the real, copy-pasteable code rather than a fictional install
+            command:
+          </p>
+          <CodeTabs
+            tabs={[
+              {
+                label: "middleware.ts",
+                code: `import { NextResponse, type NextRequest } from "next/server";
+
+const AI_CRAWLERS = ["GPTBot", "ChatGPT-User", "ClaudeBot", "PerplexityBot", "CCBot", "Bytespider"];
+
+export async function middleware(request: NextRequest) {
+  const ua = request.headers.get("user-agent") ?? "";
+  if (!AI_CRAWLERS.some((c) => ua.includes(c))) return NextResponse.next();
+
+  const res = await fetch("https://agentread.dev/api/v1/read", {
+    method: "POST",
+    headers: {
+      Authorization: \`Bearer \${process.env.AGENTREAD_API_KEY}\`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ url: request.url }),
+  });
+  if (!res.ok) return NextResponse.next();
+  const { markdown } = await res.json();
+  return new Response(markdown, { headers: { "content-type": "text/markdown" } });
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-10 border-t border-white/10 pt-8 first:mt-6 first:border-0 first:pt-0">
-      <h2 className="mb-3 font-[family-name:var(--font-display)] text-xl font-bold">{title}</h2>
-      <div className="space-y-3 text-sm text-neutral-300">{children}</div>
-    </section>
-  );
-}
+export const config = { matcher: "/:path*" };`,
+              },
+            ]}
+          />
+          <p>
+            This exact pattern (crawler UA detection → real distill → Markdown response) is what
+            runs on agentread.dev itself, in <code>src/proxy.ts</code>.
+          </p>
+        </section>
 
-function Code({ children }: { children: string }) {
-  return (
-    <pre className="overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-4 font-[family-name:var(--font-mono)] text-xs text-neutral-300">
-      {children}
-    </pre>
+        <section className="doc-section" id="readscore">
+          <h2>How ReadScore is computed</h2>
+          <p>
+            Fully transparent — starts at 100, then deducts for: low payload reduction, high
+            script count (&gt;25 tags), price/CTA text present in raw HTML but absent from
+            extracted text (JS-only rendering), disabled buy/checkout buttons in markup,
+            lazy-loaded content, and a missing <code>/llms.txt</code>. Every deduction ships as a
+            human-readable flag alongside the score — see{" "}
+            <code>src/lib/engine/read.ts</code> for the exact logic.
+          </p>
+        </section>
+
+        <section className="doc-section" id="limits">
+          <h2>Rate limits</h2>
+          <table className="param-table">
+            <thead>
+              <tr>
+                <th>Surface</th>
+                <th>Auth</th>
+                <th>Limit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>/api/read, /api/scan</td>
+                <td>none</td>
+                <td>10 req/min per IP</td>
+              </tr>
+              <tr>
+                <td>/api/v1/read, /api/mcp</td>
+                <td>bearer key</td>
+                <td>60 req/min per key</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section className="doc-section" id="roadmap">
+          <h2>Roadmap</h2>
+          <p>Not built yet — listed here instead of documented as if callable today:</p>
+          <ul style={{ color: "var(--text-2)", paddingLeft: 20, display: "grid", gap: 8 }}>
+            <li>MCP tools: batch, map_site, extract_data</li>
+            <li>Crawl (whole-domain Markdown corpus)</li>
+            <li>Watch (change-detection webhooks)</li>
+            <li>llms.txt Studio (auto-generate &amp; host llms.txt / llms-full.txt)</li>
+            <li>Agent-traffic analytics dashboard</li>
+            <li>Pay-per-crawl monetization for publishers</li>
+            <li>Billing / Stripe integration</li>
+            <li>Act — semantic agent transactions (long-term)</li>
+          </ul>
+        </section>
+      </main>
+    </div>
   );
 }

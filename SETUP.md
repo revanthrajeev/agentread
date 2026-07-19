@@ -140,7 +140,23 @@ open (IP-rate-limited) since they power the public, no-login Playground and Read
 | API key issuance/revocation | ✅ real (hashed storage, shown once) |
 | Bearer-auth on the public API (`/api/v1/read`) | ✅ real — requires `Authorization: Bearer sk-ar-...`, 401s otherwise, 60 req/min per key |
 | MCP server (`/api/mcp`) | ✅ real — remote Streamable HTTP MCP server, `read_url` + `score_url` tools, same bearer-auth |
-| Serve middleware (Layer 2) | ⏳ not built yet |
+| Serve middleware (Layer 2) | ✅ real — `src/proxy.ts` detects known AI-crawler UAs and serves them real distilled Markdown; this site runs it on itself |
+| Design system / 3D hero | ✅ real — glass-morphism UI + Three.js scroll-reactive canvas, merged in from the earlier static concept site (now retired) |
 | Billing / Stripe | ⏳ not built yet |
 
 Everything marked ✅ is genuinely functional right now, not simulated.
+
+### Testing the Serve middleware locally
+
+```bash
+# human request — normal HTML
+curl -s -o /dev/null -w "%{http_code} %{content_type}\n" http://localhost:3000/
+
+# AI crawler — gets Markdown instead
+curl -s -D - -o /dev/null -A "GPTBot/1.1" http://localhost:3000/ \
+  | grep -i "x-agentread\|x-readscore\|content-type"
+```
+The crawler request should come back `content-type: text/markdown` with `x-readscore` and
+`x-agentread-crawler` headers. If it doesn't, check that `src/proxy.ts` (not a root-level
+`proxy.ts`) exists — Next.js silently ignores a `proxy.ts` at the repo root when the app
+lives under `src/app`, which is exactly the bug this file used to have.

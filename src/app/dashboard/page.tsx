@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ApiKeysPanel from "@/components/ApiKeysPanel";
+import ReadsChart from "@/components/site/ReadsChart";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -35,68 +36,164 @@ export default async function DashboardPage() {
   const tokensSaved = reads
     ? reads.reduce((s, r) => s + Math.max(0, (r.tokens_before ?? 0) - (r.tokens_after ?? 0)), 0)
     : 0;
+  const cacheHits = reads ? reads.filter((r) => r.cache_state === "HIT").length : 0;
+  const cacheHitRate = totalReads ? Math.round((cacheHits / totalReads) * 100) : 0;
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-14">
-      <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Dashboard</h1>
-      <p className="mt-1 text-neutral-400">{user?.email}</p>
+    <div className="dash-layout">
+      <aside className="dash-side">
+        <div className="side-group">
+          <div className="side-title">Project</div>
+          <a className="side-link active" href="/dashboard">
+            <SideIcon d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z" />
+            Overview
+          </a>
+          <span className="side-link roadmap">
+            <SideIcon d="M4 20V10m6 10V4m6 16v-7m4 7H2" />
+            Agent analytics
+            <span className="side-soon">soon</span>
+          </span>
+        </div>
+        <div className="side-group">
+          <div className="side-title">Product</div>
+          <span className="side-link active">
+            <SideIcon d="M14 7h4a2 2 0 0 1 0 10h-4M10 7H6a2 2 0 0 0 0 10h4M8 12h8" />
+            Read API keys
+          </span>
+          <span className="side-link roadmap">
+            <SideIcon d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
+            Watch alerts
+            <span className="side-soon">soon</span>
+          </span>
+          <span className="side-link roadmap">
+            <SideIcon d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
+            llms.txt Studio
+            <span className="side-soon">soon</span>
+          </span>
+        </div>
+        <div className="side-group">
+          <div className="side-title">Account</div>
+          <span className="side-link roadmap">
+            <SideIcon d="M2.5 5h19v14h-19zM2.5 10h19" />
+            Billing
+            <span className="side-soon">soon</span>
+          </span>
+        </div>
+      </aside>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Stat label="Total reads" value={totalReads.toLocaleString()} />
-        <Stat label="Avg ReadScore" value={totalReads ? `${avgScore}/100` : "—"} />
-        <Stat label="Tokens saved" value={tokensSaved.toLocaleString()} />
-      </div>
-
-      <div className="mt-8">
-        <ApiKeysPanel initialKeys={keys ?? []} />
-      </div>
-
-      <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="mb-4 font-semibold">Recent reads</h2>
-        {!reads || reads.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            No reads yet — run one from the{" "}
-            <a href="/playground" className="text-violet-400 underline">
-              playground
-            </a>{" "}
-            while signed in.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-xs uppercase text-neutral-500">
-                  <th className="py-2 pr-4">URL</th>
-                  <th className="py-2 pr-4">Score</th>
-                  <th className="py-2 pr-4">Risk</th>
-                  <th className="py-2 pr-4">Latency</th>
-                  <th className="py-2">When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reads.map((r) => (
-                  <tr key={r.id} className="border-t border-white/5">
-                    <td className="max-w-xs truncate py-2 pr-4 font-[family-name:var(--font-mono)] text-xs">{r.url}</td>
-                    <td className="py-2 pr-4">{r.read_score}</td>
-                    <td className="py-2 pr-4">{r.hallucination_risk}</td>
-                    <td className="py-2 pr-4">{r.latency_ms} ms</td>
-                    <td className="py-2 text-neutral-500">{new Date(r.created_at).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <main className="dash-main">
+        <div className="dash-head">
+          <div>
+            <h1>Overview</h1>
+            <p className="sub">{user.email} · real Supabase data, not a demo</p>
           </div>
-        )}
-      </div>
-    </main>
+          <a className="btn btn-primary btn-sm magnetic" href="/playground">
+            Run a read →
+          </a>
+        </div>
+
+        <div className="kpis">
+          <div className="kpi glass">
+            <div className="stat-label">Total reads</div>
+            <div className="stat-value">{totalReads.toLocaleString()}</div>
+            <div className="stat-sub">last 50 shown below</div>
+          </div>
+          <div className="kpi glass">
+            <div className="stat-label">Avg ReadScore</div>
+            <div className="stat-value">{totalReads ? `${avgScore}` : "—"}
+              {totalReads > 0 && <span className="unit"> /100</span>}
+            </div>
+            <div className="stat-sub">{totalReads ? "across your reads" : "no reads yet"}</div>
+          </div>
+          <div className="kpi glass">
+            <div className="stat-label">Tokens saved</div>
+            <div className="stat-value">{tokensSaved.toLocaleString()}</div>
+            <div className="stat-sub">raw HTML tokens avoided</div>
+          </div>
+          <div className="kpi glass">
+            <div className="stat-label">Cache hit rate</div>
+            <div className="stat-value">{totalReads ? `${cacheHitRate}%` : "—"}</div>
+            <div className="meter">
+              <div className="meter-fill" style={{ width: `${cacheHitRate}%` }} />
+            </div>
+          </div>
+        </div>
+
+        <section className="panel glass">
+          <div className="panel-head">
+            <div>
+              <h2>Reads, last 14 days</h2>
+              <p className="hint">your own reads, real data</p>
+            </div>
+          </div>
+          {totalReads > 0 ? <ReadsChart reads={reads!} /> : <p className="empty-note">No reads yet — run one from the Playground to see it here.</p>}
+        </section>
+
+        <div style={{ marginBottom: 20 }}>
+          <ApiKeysPanel initialKeys={keys ?? []} />
+        </div>
+
+        <section className="panel glass">
+          <div className="panel-head">
+            <h2>Recent reads</h2>
+            <span className="hint">last {Math.min(totalReads, 50)}</span>
+          </div>
+          {!reads || reads.length === 0 ? (
+            <p className="empty-note">
+              No reads yet — run one from the <a href="/playground" style={{ color: "var(--accent-strong)" }}>playground</a> while signed in.
+            </p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table className="data-table" style={{ minWidth: 640 }}>
+                <thead>
+                  <tr>
+                    <th>URL</th>
+                    <th>Score</th>
+                    <th>Risk</th>
+                    <th>Latency</th>
+                    <th>Cache</th>
+                    <th>When</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reads.map((r) => (
+                    <tr key={r.id}>
+                      <td className="mono" style={{ maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {r.url}
+                      </td>
+                      <td>{r.read_score}</td>
+                      <td>
+                        <span
+                          className={`pill ${
+                            r.hallucination_risk === "low"
+                              ? "pill-good"
+                              : r.hallucination_risk === "medium"
+                              ? "pill-warn"
+                              : "pill-serious"
+                          }`}
+                        >
+                          {r.hallucination_risk}
+                        </span>
+                      </td>
+                      <td className="mono">{r.latency_ms} ms</td>
+                      <td className="mono">{r.cache_state}</td>
+                      <td style={{ color: "var(--muted)" }}>{new Date(r.created_at).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function SideIcon({ d }: { d: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
-      <p className="text-xs text-neutral-400">{label}</p>
-      <p className="mt-1 font-[family-name:var(--font-display)] text-2xl font-bold">{value}</p>
-    </div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <path d={d} />
+    </svg>
   );
 }

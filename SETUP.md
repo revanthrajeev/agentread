@@ -93,6 +93,10 @@ the repo is already pushed.
      only to authenticate proxy.ts's own server-to-server call to `/api/internal/serve`
      (see "Serve middleware architecture" below). If this is missing, Serve silently
      disables itself rather than breaking the site — crawlers just get the normal page.
+   - `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` (optional) → create a free project at
+     [sentry.io](https://sentry.io) to get a DSN. Without these, the site behaves exactly
+     the same, just with no proactive error alerting — every production bug found so far
+     was only caught because a human happened to notice the site was down.
 3. Deploy.
 4. Back in Supabase **Authentication → URL Configuration**, add your production URL to both
    Site URL and Redirect URLs (`https://yourdomain.com/auth/callback`).

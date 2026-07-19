@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import ReadScanWidget from "@/components/ReadScanWidget";
 import WaitlistForm from "@/components/WaitlistForm";
 import Reveal from "@/components/site/Reveal";
@@ -165,6 +166,31 @@ export default async function Home() {
       </header>
 
       <Marquee label="Speaks standard MCP — drops into any compatible client" items={MCP_CLIENTS} />
+
+      {/* ======================= PRODUCT VISUAL ======================= */}
+      <section className="section-tight">
+        <div className="container">
+          <Reveal>
+            <div className="glass" style={{ padding: 8, borderRadius: "var(--r-lg)", overflow: "hidden" }}>
+              <Image
+                src="/og.png"
+                alt="Illustrative preview of the AgentRead dashboard style — glass panels, ReadScore gauge, trend chart"
+                width={1376}
+                height={768}
+                style={{ width: "100%", height: "auto", borderRadius: 12, display: "block" }}
+                priority={false}
+              />
+            </div>
+            <p style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "var(--muted)" }}>
+              Illustrative preview — see it running for real in the{" "}
+              <Link href="/playground" style={{ textDecoration: "underline" }}>
+                Playground
+              </Link>
+              .
+            </p>
+          </Reveal>
+        </div>
+      </section>
 
       {/* ======================= RENDER TAX ======================= */}
       <section className="section" id="problem">

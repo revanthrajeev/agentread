@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
 import TurndownService from "turndown";
 // @ts-expect-error — no bundled types for the gfm plugin
@@ -77,8 +77,13 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
 
   const htmlBytes = Buffer.byteLength(html, "utf8");
 
-  const dom = new JSDOM(html, { url });
-  const doc = dom.window.document;
+  // linkedom, not jsdom: jsdom is Node-native and has many internal dynamically-required
+  // files that break Netlify's (and other platforms') serverless function bundling — a real,
+  // repeated production failure. linkedom is pure JS, no native deps, and is the established
+  // pairing for @mozilla/readability in serverless/edge environments. A <base> tag gives it
+  // the page's real URL so relative links/images in the extracted content resolve correctly,
+  // the same job jsdom's `{ url }` option did.
+  const { document: doc } = parseHTML(withBaseHref(html, url));
 
   // signal detection BEFORE Readability strips things — feeds the risk flags
   const bodyText = doc.body?.textContent ?? "";
@@ -193,4 +198,10 @@ function normalizeUrl(input: string): string {
   let u = input.trim();
   if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
   return new URL(u).toString();
+}
+
+function withBaseHref(html: string, url: string): string {
+  if (/<base[\s>]/i.test(html)) return html; // page already sets its own base — don't override it
+  const baseTag = `<base href="${url}">`;
+  return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (m) => `${m}${baseTag}`) : `${baseTag}${html}`;
 }

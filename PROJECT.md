@@ -97,8 +97,15 @@ this is the actual product, running, not slides describing a future product.*
   their own edge — validating the *Serve* layer specifically.
 - **Y Combinator** issued a Summer 2026 RFS explicitly calling for agent-economy
   infrastructure.
-- The `llms.txt` convention is emerging organically (analogous to `robots.txt` in 1994) —
-  early, unstandardized, and nobody yet owns the tooling around it.
+- The `llms.txt` convention exists but adoption is thin and, more importantly, no major AI
+  crawler (GPTBot, ClaudeBot, PerplexityBot) has publicly committed to reading it — they
+  overwhelmingly still crawl raw HTML directly. This is a point *in favor* of AgentRead's
+  actual architecture: **Serve** works by intercepting the real HTML request every crawler
+  already makes today, rather than depending on crawlers voluntarily adopting a new opt-in
+  file. It doesn't need the standard to win in order to work.
+- As of mid-2026, two much larger platforms have entered this exact space — a real
+  competitive signal, but also validation that the problem is now taken seriously at
+  platform scale, not a niche concern. See the Competitive Landscape section below.
 
 *Speaker note: the honest framing is "early, not obvious yet" — that's the opportunity
 and the risk in the same sentence. Say both.*
@@ -107,22 +114,30 @@ and the risk in the same sentence. Say both.*
 
 ## 7. Competitive Landscape
 
-| | AgentRead | Firecrawl | Browserbase | Cloudflare/Vercel |
-|---|---|---|---|---|
-| Clean HTML → Markdown | ✅ | ✅ (145K+ GitHub stars, funded) | — | edge-native, partial |
-| Explainable readability score | ✅ | — | — | — |
-| Hallucination risk flags | ✅ | — | — | — |
-| Serve *your own* site to agents | ✅ any host | — | — | infra-level only |
-| Browser action / "Act" | roadmap | partial | ✅ | — |
+| | AgentRead | Firecrawl | Browserbase | Cloudflare | Vercel |
+|---|---|---|---|---|---|
+| Clean HTML → Markdown | ✅ | ✅ (145K+ GitHub stars, funded) | — | edge-native, partial | edge-native, partial |
+| Explainable readability score | ✅ | — | — | ✅ Agent Readiness Score (Apr 2026, public scanner + dashboard) | spec only — Agent Readability Spec, no scanner product |
+| Hallucination risk flags | ✅ | — | — | — | — |
+| Serve *your own* site to agents, any host | ✅ | — | — | Cloudflare-hosted only | Vercel-hosted only |
+| Browser action / "Act" | roadmap | partial | ✅ | — | — |
 
 **Honest read:** Firecrawl already owns the "read someone else's site" wedge, with funding
-and scale AgentRead does not have. The differentiated, defensible bet is **Layer 2 (Serve)**
-— now genuinely live, not just a roadmap slide —
-and the **ReadScore standard** — becoming "the Lighthouse of agent readability" — not
-out-scraping an incumbent scraper.
+and scale AgentRead does not have — unchanged. What's new: Cloudflare shipped a public
+"Agent Readiness Score" (isitagentready.com, now in their dashboard) in April 2026 — a
+direct hit on the ReadScore positioning, from a platform with vastly more distribution.
+Vercel has published an "Agent Readability Spec" that third parties already score against.
+Neither ships anything resembling **Serve**: Cloudflare's tool tells you your score and stops
+there if you're not on Cloudflare; Vercel's is documentation, not a deployable fix. The
+sharpened bet isn't "the Lighthouse of agent readability" alone anymore — a platform with
+more reach can out-distribute a standalone scorer. It's **"we're the one that actually fixes
+it, on any host, today"** — Serve is a real, running product; a score by itself is a
+snapshot.
 
-*Speaker note: naming Firecrawl unprompted builds credibility. Investors will ask "why not
-Firecrawl" regardless — answering it before they ask is stronger than being caught unprepared.*
+*Speaker note: naming Firecrawl, Cloudflare, and Vercel unprompted builds credibility.
+Investors will ask "why not just use Cloudflare's score" regardless — answering it before
+they ask is stronger than being caught unprepared, and "score vs. fix, any host vs.
+one host" is a real, defensible answer, not a dodge.*
 
 ---
 

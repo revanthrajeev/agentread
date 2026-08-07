@@ -33,7 +33,15 @@ export async function serveMarkdownToCrawlers(request: NextRequest): Promise<Res
     const res = await fetch(internalUrl, {
       method: "POST",
       headers: { "content-type": "application/json", "x-internal-secret": secret },
-      body: JSON.stringify({ url: request.url }),
+      body: JSON.stringify({
+        url: request.url,
+        // Passed through so the Node-runtime route can log which agent asked for what —
+        // this is the agent-traffic dataset, and the edge function is the only place that
+        // ever sees the original crawler's User-Agent.
+        crawler,
+        path: request.nextUrl.pathname,
+        userAgent: request.headers.get("user-agent")?.slice(0, 300) ?? null,
+      }),
       signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) throw new Error(`Internal serve route responded ${res.status}`);

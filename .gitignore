@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but .env.example holds no secrets and IS the setup documentation — every
+# variable the app reads, with notes on what breaks when each is unset. The
+# blanket .env* above was silently excluding it.
+!.env.example
 
 # vercel
 .vercel

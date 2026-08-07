@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { readUrl } from "@/lib/engine/read";
+import { recordAgentHit } from "@/lib/analytics/agentHits";
+import { verifyApiKey } from "@/lib/auth/apiKey";
 
 /**
  * Internal-only route: does the actual fetch + Readability + Turndown work for the Serve
@@ -23,6 +25,25 @@ export async function POST(request: Request) {
 
   try {
     const result = await readUrl(url);
+
+    // Log the agent hit. When this deployment serves its own site there's no owning customer,
+    // so the row is host-scoped with a null user; a customer running the Serve middleware sets
+    // AGENTREAD_API_KEY, which attributes the traffic to their dashboard.
+    if (typeof body?.crawler === "string") {
+      const ownerKey = process.env.AGENTREAD_API_KEY;
+      const owner = ownerKey ? await verifyApiKey(ownerKey) : null;
+      await recordAgentHit({
+        userId: owner?.userId ?? null,
+        host: safeHost(url),
+        path: typeof body?.path === "string" ? body.path : "/",
+        crawler: body.crawler,
+        userAgent: typeof body?.userAgent === "string" ? body.userAgent : null,
+        readScore: result.readScore,
+        markdownBytes: result.markdownBytes,
+        tokensSaved: Math.max(0, result.tokensBefore - result.tokensAfter),
+      });
+    }
+
     return NextResponse.json({
       markdown: result.markdown,
       readScore: result.readScore,
@@ -31,5 +52,13 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to read URL";
     return NextResponse.json({ error: message }, { status: 422 });
+  }
+}
+
+function safeHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "unknown";
   }
 }

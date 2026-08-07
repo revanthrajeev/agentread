@@ -3,8 +3,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z } from "zod";
 import { readUrl, type ReadResult } from "@/lib/engine/read";
+import { auditSite } from "@/lib/engine/crawl";
+import { generateLlmsFullTxt, generateLlmsTxt } from "@/lib/engine/llmstxt";
 import { extractBearerToken, verifyApiKey } from "@/lib/auth/apiKey";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkQuota, recordUsage } from "@/lib/billing/usage";
+import { saveAudit } from "@/lib/audit/store";
 
 /**
  * Remote MCP server (Streamable HTTP, stateless — a fresh McpServer/transport per request,
@@ -12,6 +16,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * (Claude, ChatGPT connectors, custom agents) with an AgentRead API key as the bearer token.
  * Exposes the same engine as /api/v1/read, just addressed as MCP tools instead of a REST call.
  */
+
+// audit_site / generate_llms_txt crawl many pages — the platform default would cut them off.
+export const maxDuration = 300;
 
 function persistRead(userId: string, result: ReadResult, agent: string) {
   createAdminClient()
@@ -90,6 +97,108 @@ function buildServer(userId: string) {
           },
         ],
       };
+    }
+  );
+
+  server.registerTool(
+    "audit_site",
+    {
+      title: "Audit site",
+      description:
+        "Crawl a whole site and score every page for AI-agent readability. Discovers pages via llms.txt, then sitemap.xml, then on-page links. Returns the average ReadScore, the worst pages, and the issues costing the site points. Use this when asked how readable or agent-friendly an entire website is, rather than calling read_url page by page.",
+      inputSchema: {
+        url: z.string().describe("Root URL of the site to audit, e.g. https://example.com"),
+        pages: z
+          .number()
+          .optional()
+          .describe("Maximum pages to crawl (default 10; capped by the account's plan)"),
+      },
+    },
+    async ({ url, pages }) => {
+      const quota = await checkQuota(userId, "audits");
+      if (!quota.allowed) {
+        return {
+          content: [{ type: "text", text: `Quota exceeded: ${quota.reason}` }],
+          isError: true,
+        };
+      }
+
+      const limit = Math.max(1, Math.min(pages ?? 10, quota.plan.limits.pagesPerAudit));
+      const audit = await auditSite(url, { pages: limit });
+      const stored = await saveAudit(userId, audit, { share: false });
+      await recordUsage(userId, { audits: 1, pages: audit.pagesCrawled });
+
+      const worst = audit.pages
+        .filter((p) => p.ok)
+        .sort((a, b) => a.readScore - b.readScore)
+        .slice(0, 5)
+        .map((p) => `- ${p.readScore}/100 — ${p.url}`)
+        .join("\n");
+
+      const issues = audit.topIssues
+        .slice(0, 6)
+        .map((i) => `- [${i.severity}] ${i.text} (${i.count} page${i.count === 1 ? "" : "s"})`)
+        .join("\n");
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: [
+              `# ${audit.host} — average ReadScore ${audit.avgScore}/100`,
+              ``,
+              `Crawled ${audit.pagesCrawled} pages (discovered via ${audit.discovery}). Range ${audit.minScore}–${audit.maxScore}.`,
+              `llms.txt: ${audit.hasLlmsTxt ? "present" : "missing"}.`,
+              `Tokens to read the whole site: ${audit.tokensBefore.toLocaleString()} raw → ${audit.tokensAfter.toLocaleString()} distilled.`,
+              stored?.id ? `Audit id: ${stored.id}` : ``,
+              ``,
+              `## Lowest-scoring pages`,
+              worst || "(none)",
+              ``,
+              `## Issues`,
+              issues || "(none detected)",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          },
+        ],
+      };
+    }
+  );
+
+  server.registerTool(
+    "generate_llms_txt",
+    {
+      title: "Generate llms.txt",
+      description:
+        "Crawl a site and generate the contents of its llms.txt (a curated Markdown index of the site for language models) or llms-full.txt (the entire site's Markdown concatenated). Use when asked to create, write, or fix a site's llms.txt file.",
+      inputSchema: {
+        url: z.string().describe("Root URL of the site"),
+        variant: z
+          .enum(["index", "full"])
+          .optional()
+          .describe("'index' for llms.txt (default), 'full' for llms-full.txt"),
+        pages: z.number().optional().describe("Maximum pages to crawl (default 20)"),
+      },
+    },
+    async ({ url, variant, pages }) => {
+      const quota = await checkQuota(userId, "audits");
+      if (!quota.allowed) {
+        return {
+          content: [{ type: "text", text: `Quota exceeded: ${quota.reason}` }],
+          isError: true,
+        };
+      }
+
+      const limit = Math.max(1, Math.min(pages ?? 20, quota.plan.limits.pagesPerAudit));
+      const audit = await auditSite(url, { pages: limit });
+      await saveAudit(userId, audit, { share: false });
+      await recordUsage(userId, { audits: 1, pages: audit.pagesCrawled });
+
+      const content =
+        variant === "full" ? generateLlmsFullTxt(audit) : generateLlmsTxt(audit);
+
+      return { content: [{ type: "text", text: content }] };
     }
   );
 

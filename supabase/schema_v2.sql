@@ -37,6 +37,8 @@ create policy "audits are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.audits to authenticated;
+
 create index if not exists audits_user_created_idx on public.audits (user_id, created_at desc);
 create index if not exists audits_host_idx on public.audits (host);
 
@@ -71,6 +73,8 @@ create policy "audit pages are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.audit_pages to authenticated;
+
 create index if not exists audit_pages_audit_idx on public.audit_pages (audit_id);
 
 -- ------------------------------------------------------------------
@@ -101,6 +105,8 @@ create policy "watches are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.watches to authenticated;
+
 create index if not exists watches_due_idx on public.watches (active, last_run_at);
 
 -- ------------------------------------------------------------------
@@ -126,6 +132,8 @@ create policy "watch events are managed by owner"
   on public.watch_events for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+grant select, insert, update, delete on public.watch_events to authenticated;
 
 create index if not exists watch_events_watch_idx on public.watch_events (watch_id, created_at desc);
 
@@ -155,6 +163,8 @@ create policy "agent hits are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.agent_hits to authenticated;
+
 create index if not exists agent_hits_user_created_idx on public.agent_hits (user_id, created_at desc);
 create index if not exists agent_hits_crawler_idx on public.agent_hits (crawler);
 
@@ -179,6 +189,11 @@ drop policy if exists "usage is viewable by owner" on public.usage_counters;
 create policy "usage is viewable by owner"
   on public.usage_counters for select
   using (auth.uid() = user_id);
+
+-- Every write to this table actually goes through increment_usage() below via the
+-- service-role client, which bypasses grants entirely — this SELECT grant exists only
+-- so the policy above is reachable if a user-session client ever queries it directly.
+grant select on public.usage_counters to authenticated;
 
 -- Atomic increment: avoids the read-modify-write race two concurrent API calls would hit.
 create or replace function public.increment_usage(

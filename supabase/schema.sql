@@ -26,6 +26,12 @@ create policy "profiles are updatable by owner"
   on public.profiles for update
   using (auth.uid() = id);
 
+-- RLS policies only restrict *rows* within a table a role can already touch — Postgres
+-- checks the base table-level GRANT first, and a fresh project has none by default for
+-- tables created outside the dashboard's Table Editor. Without this, every policy above
+-- is unreachable and every query 42501s before RLS is ever evaluated.
+grant select, update on public.profiles to authenticated;
+
 -- Auto-create a profile row whenever someone signs up (incl. via Google OAuth)
 create or replace function public.handle_new_user()
 returns trigger
@@ -72,6 +78,8 @@ create policy "keys are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.api_keys to authenticated;
+
 -- ------------------------------------------------------------------
 -- 3. Reads — every URL read/scored, powers the dashboard + playground history
 -- ------------------------------------------------------------------
@@ -100,6 +108,8 @@ create policy "reads are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.reads to authenticated;
+
 create index if not exists reads_user_created_idx on public.reads (user_id, created_at desc);
 
 -- ------------------------------------------------------------------
@@ -120,3 +130,5 @@ create policy "anyone can join the waitlist"
 
 -- No select policy on waitlist: only accessible via the Supabase dashboard
 -- or a service-role key on the server — public visitors can insert, not read.
+-- Grant matches that intent exactly: anon gets insert only, nothing broader.
+grant insert on public.waitlist to anon;

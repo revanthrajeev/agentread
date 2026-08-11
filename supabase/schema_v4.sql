@@ -89,6 +89,10 @@ create policy "payments are readable by owner"
   on public.payments for select
   using (auth.uid() = user_id);
 
+-- All writes come from the service-role client inside verified webhook handlers, which
+-- bypasses grants entirely — authenticated only ever needs to read its own history.
+grant select on public.payments to authenticated;
+
 create index if not exists payments_user_idx on public.payments (user_id, created_at desc);
 create index if not exists payments_created_idx on public.payments (created_at desc);
 

@@ -35,6 +35,8 @@ create policy "github connections are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.github_connections to authenticated;
+
 -- ------------------------------------------------------------------
 -- 2. Fix jobs — one Autofix run against one audit
 -- ------------------------------------------------------------------
@@ -72,6 +74,8 @@ create policy "fix jobs are managed by owner"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+grant select, insert, update, delete on public.fix_jobs to authenticated;
+
 create index if not exists fix_jobs_user_created_idx on public.fix_jobs (user_id, created_at desc);
 
 -- ------------------------------------------------------------------
@@ -103,6 +107,8 @@ create policy "fix attempts are managed by owner"
   on public.fix_attempts for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+grant select, insert, update, delete on public.fix_attempts to authenticated;
 
 create index if not exists fix_attempts_job_idx on public.fix_attempts (job_id);
 create index if not exists fix_attempts_strategy_idx on public.fix_attempts (strategy);

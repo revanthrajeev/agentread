@@ -405,8 +405,8 @@ async function main() {
       table.filter((r) => r.strategy === "llm" && r.model && MODEL_PROVIDER[r.model] === "anthropic").length
   );
   ok(
-    "the hardest issue (empty_shell) is kept on Claude for quality, not cost-routed away",
-    table.find((r) => r.issueKey === "empty_shell")?.model === "claude-opus-5"
+    "every llm route runs on GPT — no Anthropic key required for Autofix",
+    table.filter((r) => r.strategy === "llm").every((r) => r.model && MODEL_PROVIDER[r.model] === "openai")
   );
 
   const fakeAudit = {

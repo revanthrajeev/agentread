@@ -332,13 +332,10 @@ export default function DocsPage() {
                 <td>1 credit</td>
                 <td>
                   Needs to read and change your source — client-side-only pricing text, CTAs that
-                  ship disabled, empty SPA shells, lazy-loaded content. Routed by difficulty, not
-                  a single model: most of these are near-mechanical single-file patches and run on{" "}
-                  <span className="mono">gpt-5-nano</span>/<span className="mono">gpt-5-mini</span>
-                  ; the one case that usually spans a layout boundary (an empty SPA shell) stays
-                  on <span className="mono">claude-opus-5</span>, where patch quality matters more
-                  than the marginal cost. The credit price is the same regardless of which model
-                  actually ran it.
+                  ship disabled, empty SPA shells, lazy-loaded content. All routes run on{" "}
+                  <span className="mono">gpt-5-nano</span>/<span className="mono">gpt-5-mini</span>,
+                  picked per issue by how mechanical the patch is. The credit price is the same
+                  regardless of which of the two actually ran it.
                 </td>
               </tr>
               <tr>

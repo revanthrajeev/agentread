@@ -9,10 +9,8 @@ import type { FixPlan, FixPlanItem, FixStrategy } from "./types";
  *  1. Strategy: every issue routed to `deterministic` is a fix delivered at zero inference
  *     cost, and every issue routed to `advisory` is inference we never spend on a change
  *     we couldn't safely make anyway.
- *  2. Model: for issues that do need inference, which model. `empty_shell` is the one case
- *     where getting the patch right matters more than the marginal cost — it stays on
- *     Claude Opus. Everything else routes to GPT-5 nano or mini, which are 10-100x
- *     cheaper and, for a scoped single-file patch against supplied context, sufficient.
+ *  2. Model: for issues that do need inference, which model. All routes currently run on
+ *     GPT-5 nano or mini — no Claude dependency, so Autofix works on an OpenAI key alone.
  *     See pricing.ts for the actual per-token rates this claim rests on.
  *
  * Routing is by issue *kind*, matched against the flag text the scoring engine
@@ -91,9 +89,11 @@ const ROUTES: Route[] = [
       "Almost no text could be extracted — the page is an empty shell, a bot-wall, or a paywall to anything that doesn't run JavaScript.",
     match: /very little text content could be extracted/i,
     tokenEstimate: 50_000,
-    // The one case kept on Claude Opus — usually means restructuring rendering
-    // strategy across a layout/page boundary, not editing one clearly-scoped block.
-    model: "claude-opus-5",
+    // Restructuring rendering strategy across a layout/page boundary, not one scoped
+    // block — the hardest patch this router makes. Routed to GPT-5 mini rather than
+    // Claude Opus so Autofix runs fully on an OpenAI-only key; quality is unverified
+    // at this size of change, so watch this route's fix success rate once it's live.
+    model: "gpt-5-mini",
   },
   {
     issueKey: "lazy_content",

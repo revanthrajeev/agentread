@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ApiKeysPanel from "@/components/ApiKeysPanel";
 import ReadsChart from "@/components/site/ReadsChart";
+import DashSidebar from "@/components/dash/DashSidebar";
+import { getPlanForUser, getUsage } from "@/lib/billing/usage";
+import { isUnlimited } from "@/lib/billing/plans";
 
 // A Supabase connection failure is treated the same as "not signed in" — a redirect to
 // /login, never a hard crash on an authenticated-only page.
@@ -41,6 +45,18 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  const { data: audits } = await supabase
+    .from("audits")
+    .select("id, host, avg_score, pages_crawled, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  const [plan, usage] = await Promise.all([getPlanForUser(user.id), getUsage(user.id)]);
+  const auditsLeft = isUnlimited(plan.limits.audits)
+    ? "unlimited"
+    : `${Math.max(0, plan.limits.audits - usage.audits)} left`;
+
   const totalReads = reads?.length ?? 0;
   const avgScore = totalReads
     ? Math.round(reads!.reduce((s, r) => s + (r.read_score ?? 0), 0) / totalReads)
@@ -53,55 +69,24 @@ export default async function DashboardPage() {
 
   return (
     <div className="dash-layout">
-      <aside className="dash-side">
-        <div className="side-group">
-          <div className="side-title">Project</div>
-          <a className="side-link active" href="/dashboard">
-            <SideIcon d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z" />
-            Overview
-          </a>
-          <span className="side-link roadmap">
-            <SideIcon d="M4 20V10m6 10V4m6 16v-7m4 7H2" />
-            Agent analytics
-            <span className="side-soon">soon</span>
-          </span>
-        </div>
-        <div className="side-group">
-          <div className="side-title">Product</div>
-          <span className="side-link active">
-            <SideIcon d="M14 7h4a2 2 0 0 1 0 10h-4M10 7H6a2 2 0 0 0 0 10h4M8 12h8" />
-            Read API keys
-          </span>
-          <span className="side-link roadmap">
-            <SideIcon d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
-            Watch alerts
-            <span className="side-soon">soon</span>
-          </span>
-          <span className="side-link roadmap">
-            <SideIcon d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" />
-            llms.txt Studio
-            <span className="side-soon">soon</span>
-          </span>
-        </div>
-        <div className="side-group">
-          <div className="side-title">Account</div>
-          <span className="side-link roadmap">
-            <SideIcon d="M2.5 5h19v14h-19zM2.5 10h19" />
-            Billing
-            <span className="side-soon">soon</span>
-          </span>
-        </div>
-      </aside>
+      <DashSidebar active="overview" />
 
       <main className="dash-main">
         <div className="dash-head">
           <div>
             <h1>Overview</h1>
-            <p className="sub">{user.email} · real Supabase data, not a demo</p>
+            <p className="sub">
+              {user.email} · {plan.name} plan · {auditsLeft} audits this month
+            </p>
           </div>
-          <a className="btn btn-primary btn-sm magnetic" href="/playground">
-            Run a read →
-          </a>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Link className="btn btn-ghost btn-sm" href="/playground">
+              Run a read
+            </Link>
+            <Link className="btn btn-primary btn-sm magnetic" href="/dashboard/audits">
+              Audit a site →
+            </Link>
+          </div>
         </div>
 
         <div className="kpis">
@@ -141,7 +126,57 @@ export default async function DashboardPage() {
           {totalReads > 0 ? <ReadsChart reads={reads!} /> : <p className="empty-note">No reads yet — run one from the Playground to see it here.</p>}
         </section>
 
-        <div style={{ marginBottom: 20 }}>
+        <section className="panel glass" style={{ marginBottom: 20 }}>
+          <div className="panel-head">
+            <div>
+              <h2>Recent site audits</h2>
+              <p className="hint">whole-site crawls, not single pages</p>
+            </div>
+            <Link className="btn btn-ghost btn-sm" href="/dashboard/audits">
+              All audits
+            </Link>
+          </div>
+          {!audits || audits.length === 0 ? (
+            <p className="empty-note">
+              No site audits yet —{" "}
+              <Link href="/dashboard/audits" style={{ color: "var(--accent-strong)" }}>
+                run your first
+              </Link>{" "}
+              to see every page scored at once.
+            </p>
+          ) : (
+            <div className="table-wrap" style={{ overflowX: "auto" }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Site</th>
+                    <th>Avg score</th>
+                    <th>Pages</th>
+                    <th>When</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {audits.map((a) => (
+                    <tr key={a.id}>
+                      <td>
+                        <Link href={`/dashboard/audits/${a.id}`} style={{ color: "var(--accent-strong)" }}>
+                          {a.host}
+                        </Link>
+                      </td>
+                      <td className="mono">{a.avg_score}</td>
+                      <td className="mono">{a.pages_crawled}</td>
+                      <td style={{ color: "var(--muted)" }}>
+                        {new Date(a.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <div id="keys" style={{ marginBottom: 20, scrollMarginTop: 90 }}>
           <ApiKeysPanel initialKeys={keys ?? []} />
         </div>
 
@@ -199,13 +234,5 @@ export default async function DashboardPage() {
         </section>
       </main>
     </div>
-  );
-}
-
-function SideIcon({ d }: { d: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <path d={d} />
-    </svg>
   );
 }

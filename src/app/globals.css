@@ -477,6 +477,20 @@ body {
   padding: 5px 14px; border-radius: 99px; white-space: nowrap;
 }
 
+/* ---------- currency / provider switch ---------- */
+.currency-switch { display: flex; gap: 8px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap; }
+.currency-chip {
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+  font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+  padding: 7px 14px; border-radius: 99px; cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.currency-chip:hover { color: var(--text-2); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.currency-chip.is-active {
+  color: var(--text); background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
 /* ---------- faq ---------- */
 .faq { max-width: 760px; margin-inline: auto; display: grid; gap: 12px; }
 .faq-item { border-radius: var(--r-md); overflow: hidden; }

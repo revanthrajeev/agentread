@@ -10,7 +10,7 @@ const LINKS = [
   { href: "/playground", label: "Playground" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/docs", label: "Docs" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/pricing", label: "Pricing" },
 ];
 
 export default function NavClient({ userEmail }: { userEmail: string | null }) {

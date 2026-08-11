@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.URL || "https://agentread.dev";
+  const base = process.env.NEXT_PUBLIC_SITE_URL || process.env.URL || "https://agentread.tech";
   const routes = ["", "/docs", "/playground", "/login", "/privacy", "/terms"];
 
   return routes.map((route) => ({

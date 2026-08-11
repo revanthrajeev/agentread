@@ -65,7 +65,7 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
       redirect: "follow",
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; AgentReadBot/1.0; +https://agentread.dev/bot)",
+          "Mozilla/5.0 (compatible; AgentReadBot/1.0; +https://agentread.tech/bot)",
         Accept: "text/html,application/xhtml+xml",
       },
     });

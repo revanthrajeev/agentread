@@ -8,6 +8,31 @@ export interface PublicStats {
 const EMPTY_STATS: PublicStats = { totalReads: 0, avgReadScore: null };
 
 /**
+ * Usage below which the public stats strip is hidden entirely rather than rendered with zeros.
+ *
+ * A live site advertising "0 reads processed" is worse than showing nothing: it converts a
+ * neutral absence into published evidence that nobody uses the product. Once real traffic
+ * crosses the threshold the strip appears on its own, with no deploy.
+ *
+ * Override with the MIN_DISPLAY_STATS env var; 0 forces the strip to always show.
+ */
+export const MIN_DISPLAY_STATS: number = resolveThreshold();
+
+function resolveThreshold(): number {
+  const raw = process.env.MIN_DISPLAY_STATS;
+  if (raw === undefined || raw.trim() === "") return 25;
+  const parsed = Number.parseInt(raw, 10);
+  // A malformed value falls back to the default rather than accidentally publishing zeros,
+  // but an explicit 0 is honoured.
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 25;
+}
+
+/** Whether there is enough real usage for the public stats strip to be worth showing. */
+export function shouldShowPublicStats(stats: PublicStats): boolean {
+  return stats.totalReads >= MIN_DISPLAY_STATS;
+}
+
+/**
  * Real aggregate numbers for the public landing page — never fabricated. Uses the service-role
  * client because this is a cross-user aggregate (RLS on `reads` scopes normal clients to their
  * own rows only). Returns zeros/nulls (rendered as an honest "just launched" state) if the

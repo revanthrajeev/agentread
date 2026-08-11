@@ -13,11 +13,16 @@ export default function DocsPage() {
         <div className="side-group">
           <div className="side-title">Read API · Layer 1</div>
           <a className="side-link" href="#read">POST /api/v1/read</a>
+          <a className="side-link" href="#audit">POST /api/v1/audit</a>
+          <a className="side-link" href="#audit">POST /api/v1/llms-txt</a>
           <a className="side-link" href="#scan">POST /api/scan (free)</a>
         </div>
         <div className="side-group">
           <div className="side-title">Serve · Layer 2</div>
           <a className="side-link" href="#serve">Next.js middleware</a>
+          <a className="side-link" href="#watch">Watch &amp; alerts</a>
+          <a className="side-link" href="#autofix">Autofix &amp; GitHub</a>
+          <a className="side-link" href="#billing">Billing &amp; payments</a>
         </div>
         <div className="side-group">
           <div className="side-title">Reference</div>
@@ -40,7 +45,7 @@ export default function DocsPage() {
           </p>
           <h3>2 · Read a page</h3>
           <pre className="doc-code">
-            <span className="t-prompt">$</span> curl <span className="t-flag">-X POST</span> https://agentread.dev/api/v1/read \{"\n"}
+            <span className="t-prompt">$</span> curl <span className="t-flag">-X POST</span> https://agentread.tech/api/v1/read \{"\n"}
             {"  "}
             <span className="t-flag">-H</span> <span className="t-str">&quot;Authorization: Bearer $AGENTREAD_API_KEY&quot;</span> \{"\n"}
             {"  "}
@@ -101,7 +106,7 @@ export default function DocsPage() {
             {`{
   "mcpServers": {
     "agentread": {
-      "url": "https://agentread.dev/api/mcp",
+      "url": "https://agentread.tech/api/mcp",
       "headers": { "Authorization": "Bearer sk-ar-…" }
     }
   }
@@ -132,18 +137,18 @@ export default function DocsPage() {
                 <td>URL → ReadScore + flags only, no content</td>
               </tr>
               <tr>
-                <td>batch</td>
+                <td>audit_site</td>
                 <td>
-                  <span className="tag tag-soon">Roadmap</span>
+                  <span className="tag tag-live">Live</span>
                 </td>
-                <td>Many URLs in one call</td>
+                <td>Domain → every page crawled, scored, and rolled up</td>
               </tr>
               <tr>
-                <td>map_site</td>
+                <td>generate_llms_txt</td>
                 <td>
-                  <span className="tag tag-soon">Roadmap</span>
+                  <span className="tag tag-live">Live</span>
                 </td>
-                <td>Domain → crawlable outline</td>
+                <td>Domain → llms.txt or llms-full.txt contents</td>
               </tr>
               <tr>
                 <td>extract_data</td>
@@ -195,6 +200,299 @@ export default function DocsPage() {
           </div>
         </section>
 
+        <section className="doc-section" id="audit">
+          <h2>
+            Audit API <span className="tag tag-live">Live</span>
+          </h2>
+          <div className="endpoint-card glass">
+            <div className="endpoint-head">
+              <span className="method m-post">POST</span>
+              <span className="endpoint-path">/api/v1/audit</span>
+            </div>
+            <p className="endpoint-desc">
+              Crawl a whole host and score every page. Pages are discovered from{" "}
+              <span className="mono">/llms.txt</span> first, then{" "}
+              <span className="mono">/sitemap.xml</span> (following one level of sitemap-index
+              nesting), then on-page links. Consumes one audit from your monthly allowance; the
+              per-audit page cap comes from your plan.
+            </p>
+            <table className="param-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>url</td>
+                  <td>string</td>
+                  <td>Required. Root URL of the site to audit.</td>
+                </tr>
+                <tr>
+                  <td>pages</td>
+                  <td>number</td>
+                  <td>Max pages to crawl. Clamped to your plan&apos;s limit.</td>
+                </tr>
+                <tr>
+                  <td>share</td>
+                  <td>boolean</td>
+                  <td>
+                    Defaults true — returns a public <span className="mono">share_url</span> for the
+                    report. Set false to keep it private.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="endpoint-desc">
+              Returns <span className="mono">402</span> with{" "}
+              <span className="mono">code: &quot;quota_exceeded&quot;</span> when the monthly audit
+              allowance is spent.
+            </p>
+          </div>
+
+          <div className="endpoint-card glass">
+            <div className="endpoint-head">
+              <span className="method m-post">POST</span>
+              <span className="endpoint-path">/api/v1/llms-txt</span>
+            </div>
+            <p className="endpoint-desc">
+              Generate <span className="mono">llms.txt</span> (curated index) or{" "}
+              <span className="mono">llms-full.txt</span> (whole-site Markdown). Pass{" "}
+              <span className="mono">url</span> to crawl fresh (consumes one audit), or{" "}
+              <span className="mono">audit_id</span> to regenerate from an audit you already ran —
+              which re-reads stored page Markdown and costs nothing. Set{" "}
+              <span className="mono">format: &quot;text&quot;</span> to get the raw file instead of JSON.
+            </p>
+          </div>
+        </section>
+
+        <section className="doc-section" id="watch">
+          <h2>
+            Watch &amp; alerts <span className="tag tag-live">Live</span>
+          </h2>
+          <p>
+            A monitor re-audits a site on a schedule and alerts when the average ReadScore drops by
+            more than your threshold. Improvements are recorded but never paged on. Alerts POST this
+            payload to your webhook:
+          </p>
+          <pre className="code-pane mono">
+{`{
+  "event": "readscore.regression",
+  "host": "example.com",
+  "score": 61,
+  "previous_score": 78,
+  "delta": -17,
+  "top_issues": ["Price/CTA keywords found in raw HTML but not in extracted text …"],
+  "audit_url": "https://agentread.tech/dashboard/audits/…",
+  "detected_at": "2026-08-05T09:00:00.000Z"
+}`}
+          </pre>
+          <p>
+            Monitors are executed by a scheduler calling{" "}
+            <span className="mono">/api/cron/watch</span> with{" "}
+            <span className="mono">Authorization: Bearer $CRON_SECRET</span>. On Vercel this is wired
+            up in <span className="mono">vercel.json</span>.
+          </p>
+        </section>
+
+        <section className="doc-section" id="autofix">
+          <h2>
+            Autofix <span className="tag tag-live">Live</span>
+          </h2>
+          <p>
+            Turns audit findings into a pull request. Every finding is routed to one of three
+            strategies, and the routing is what determines whether a fix costs you anything:
+          </p>
+          <table className="param-table">
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Cost</th>
+                <th>What it covers</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <span className="mono">deterministic</span>
+                </td>
+                <td>Free</td>
+                <td>
+                  Generated from the crawl we already ran — <span className="mono">llms.txt</span>,{" "}
+                  <span className="mono">llms-full.txt</span>, robots.txt AI-crawler rules, the Serve
+                  middleware. No credit consumed, ever.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span className="mono">llm</span>
+                </td>
+                <td>1 credit</td>
+                <td>
+                  Needs to read and change your source — client-side-only pricing text, CTAs that
+                  ship disabled, empty SPA shells, lazy-loaded content. Routed by difficulty, not
+                  a single model: most of these are near-mechanical single-file patches and run on{" "}
+                  <span className="mono">gpt-5-nano</span>/<span className="mono">gpt-5-mini</span>
+                  ; the one case that usually spans a layout boundary (an empty SPA shell) stays
+                  on <span className="mono">claude-opus-5</span>, where patch quality matters more
+                  than the marginal cost. The credit price is the same regardless of which model
+                  actually ran it.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span className="mono">advisory</span>
+                </td>
+                <td>Free</td>
+                <td>
+                  No safe automated fix (e.g. script-heavy architecture). Reported, never patched.
+                  An unrecognised finding falls back here rather than being changed blind.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="endpoint-card glass">
+            <div className="endpoint-head">
+              <span className="method m-post">POST</span>
+              <span className="endpoint-path">/api/fix</span>
+            </div>
+            <p className="endpoint-desc">
+              Pass <span className="mono">audit_id</span> plus{" "}
+              <span className="mono">plan_only: true</span> to see the plan and its cost without
+              spending anything. Drop <span className="mono">plan_only</span> to run it: deterministic
+              fixes are applied first and unconditionally, then metered fixes run against a cost
+              ceiling, and everything lands as one pull request against a new branch.
+            </p>
+            <p className="endpoint-desc">
+              Credits are reserved before any inference and refunded for any fix the model declines
+              to make. Returns <span className="mono">402</span> with{" "}
+              <span className="mono">code: &quot;insufficient_credits&quot;</span> when the balance
+              is short.
+            </p>
+          </div>
+
+          <div className="endpoint-card glass">
+            <div className="endpoint-head">
+              <span className="method m-post">POST</span>
+              <span className="endpoint-path">/api/github/connect</span>
+            </div>
+            <p className="endpoint-desc">
+              Connects a repository. Use a fine-grained personal access token scoped to that one
+              repo, with <span className="mono">Contents: Read and write</span> and{" "}
+              <span className="mono">Pull requests: Read and write</span>. Push access is verified
+              before the token is stored, and the token is AES-256-GCM encrypted at rest — if{" "}
+              <span className="mono">SECRETS_ENCRYPTION_KEY</span> isn&rsquo;t configured the request
+              is refused rather than storing it in plaintext.
+            </p>
+            <p className="endpoint-desc">
+              Autofix never pushes to your default branch and never auto-merges. Every change is a
+              pull request you review.
+            </p>
+          </div>
+        </section>
+
+        <section className="doc-section" id="billing">
+          <h2>
+            Billing &amp; payments <span className="tag tag-live">Live</span>
+          </h2>
+          <p>
+            Three gateways are supported. Which one a customer sees depends on the currency they
+            pick and which gateways this deployment has keys for — a gateway that can&rsquo;t
+            actually charge for the chosen plan is never offered.
+          </p>
+          <table className="param-table">
+            <thead>
+              <tr>
+                <th>Gateway</th>
+                <th>Currencies</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="mono">stripe</td>
+                <td>USD, INR</td>
+                <td>
+                  Cards worldwide. A Stripe <em>India</em> account settles INR and cannot bill
+                  USD; billing USD needs a non-India entity.
+                </td>
+              </tr>
+              <tr>
+                <td className="mono">paypal</td>
+                <td>USD</td>
+                <td>
+                  Works on an Indian export account. INR is refused — PayPal ended domestic
+                  Indian payments in 2021.
+                </td>
+              </tr>
+              <tr>
+                <td className="mono">razorpay</td>
+                <td>INR, USD</td>
+                <td>
+                  UPI, Indian cards, netbanking, wallets. Settles into an Indian bank. USD
+                  requires International Payments to be activated on the account.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            Prices are set per currency rather than converted at a live FX rate, so the number on
+            the pricing page is the number on the invoice and it only changes when we change it.
+          </p>
+
+          <div className="endpoint">
+            <div className="endpoint-head">
+              <span className="method method-post">POST</span>
+              <span className="mono">/api/billing/checkout</span>
+            </div>
+            <p className="endpoint-desc">
+              Body: <span className="mono">{`{ plan, provider?, currency? }`}</span>. Returns{" "}
+              <span className="mono">{`{ url }`}</span> — the hosted checkout page — with the same
+              shape whichever gateway handled it. Omitting <span className="mono">provider</span>{" "}
+              picks the best available one for the currency; omitting{" "}
+              <span className="mono">currency</span> infers it from the request country.
+            </p>
+          </div>
+
+          <div className="endpoint">
+            <div className="endpoint-head">
+              <span className="method method-post">POST</span>
+              <span className="mono">/api/billing/cancel</span>
+            </div>
+            <p className="endpoint-desc">
+              Cancels on whichever gateway holds the subscription, always at the end of the period
+              already paid for. PayPal and Razorpay have no hosted portal, so without this a
+              customer on either would have to email support to stop paying.
+            </p>
+          </div>
+
+          <div className="endpoint">
+            <div className="endpoint-head">
+              <span className="method method-post">POST</span>
+              <span className="mono">/api/billing/webhook</span>
+              <span className="mono">/paypal</span>
+              <span className="mono">/razorpay</span>
+            </div>
+            <p className="endpoint-desc">
+              One endpoint per gateway. Stripe and Razorpay are verified by HMAC over the raw
+              request body; PayPal is verified by asking PayPal to confirm the transmission
+              signature. An event that cannot be verified — including one where the gateway was
+              unreachable — grants nothing.
+            </p>
+            <p className="endpoint-desc">
+              <strong>A checkout redirect never grants a plan.</strong> Only a verified webhook
+              does. All three funnel into a single grant path, so three gateways cannot become
+              three different ways to become paid. Every event id is claimed against a primary key
+              before any side effect, so a retried delivery cannot hand out a second month of
+              Autofix credits.
+            </p>
+          </div>
+        </section>
+
         <section className="doc-section" id="scan">
           <h2>
             Free scan &amp; playground endpoints <span className="tag tag-live">Live</span>
@@ -242,7 +540,7 @@ export async function middleware(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   if (!AI_CRAWLERS.some((c) => ua.includes(c))) return NextResponse.next();
 
-  const res = await fetch("https://agentread.dev/api/v1/read", {
+  const res = await fetch("https://agentread.tech/api/v1/read", {
     method: "POST",
     headers: {
       Authorization: \`Bearer \${process.env.AGENTREAD_API_KEY}\`,
@@ -261,7 +559,7 @@ export const config = { matcher: "/:path*" };`,
           />
           <p>
             This exact pattern (crawler UA detection → real distill → Markdown response) is what
-            runs on agentread.dev itself, in <code>src/proxy.ts</code>.
+            runs on agentread.tech itself, in <code>src/proxy.ts</code>.
           </p>
         </section>
 
@@ -306,13 +604,14 @@ export const config = { matcher: "/:path*" };`,
           <h2>Roadmap</h2>
           <p>Not built yet — listed here instead of documented as if callable today:</p>
           <ul style={{ color: "var(--text-2)", paddingLeft: 20, display: "grid", gap: 8 }}>
-            <li>MCP tools: batch, map_site, extract_data</li>
-            <li>Crawl (whole-domain Markdown corpus)</li>
-            <li>Watch (change-detection webhooks)</li>
-            <li>llms.txt Studio (auto-generate &amp; host llms.txt / llms-full.txt)</li>
-            <li>Agent-traffic analytics dashboard</li>
-            <li>Pay-per-crawl monetization for publishers</li>
-            <li>Billing / Stripe integration</li>
+            <li>MCP tools: batch, extract_data (URL + schema → typed data)</li>
+            <li>
+              Hosted llms.txt — we generate the file today; serving it from your domain on our
+              behalf is not built
+            </li>
+            <li>Pay-per-crawl monetization for publishers (HTTP 402 metering)</li>
+            <li>A published npm package for the Serve middleware</li>
+            <li>SSO / SAML, audit log, RBAC (Enterprise)</li>
             <li>Act — semantic agent transactions (long-term)</li>
           </ul>
         </section>

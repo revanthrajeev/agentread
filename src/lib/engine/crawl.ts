@@ -83,7 +83,7 @@ async function fetchText(url: string, timeoutMs = DISCOVERY_TIMEOUT_MS): Promise
     const res = await fetch(url, {
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; AgentReadBot/1.0; +https://agentread.dev/bot)",
+        "User-Agent": "Mozilla/5.0 (compatible; AgentReadBot/1.0; +https://agentread.tech/bot)",
       },
     });
     if (!res.ok) return null;

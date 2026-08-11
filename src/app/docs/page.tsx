@@ -45,7 +45,7 @@ export default function DocsPage() {
           </p>
           <h3>2 · Read a page</h3>
           <pre className="doc-code">
-            <span className="t-prompt">$</span> curl <span className="t-flag">-X POST</span> https://agentread.dev/api/v1/read \{"\n"}
+            <span className="t-prompt">$</span> curl <span className="t-flag">-X POST</span> https://agentread.tech/api/v1/read \{"\n"}
             {"  "}
             <span className="t-flag">-H</span> <span className="t-str">&quot;Authorization: Bearer $AGENTREAD_API_KEY&quot;</span> \{"\n"}
             {"  "}
@@ -106,7 +106,7 @@ export default function DocsPage() {
             {`{
   "mcpServers": {
     "agentread": {
-      "url": "https://agentread.dev/api/mcp",
+      "url": "https://agentread.tech/api/mcp",
       "headers": { "Authorization": "Bearer sk-ar-…" }
     }
   }
@@ -285,7 +285,7 @@ export default function DocsPage() {
   "previous_score": 78,
   "delta": -17,
   "top_issues": ["Price/CTA keywords found in raw HTML but not in extracted text …"],
-  "audit_url": "https://agentread.dev/dashboard/audits/…",
+  "audit_url": "https://agentread.tech/dashboard/audits/…",
   "detected_at": "2026-08-05T09:00:00.000Z"
 }`}
           </pre>
@@ -332,7 +332,13 @@ export default function DocsPage() {
                 <td>1 credit</td>
                 <td>
                   Needs to read and change your source — client-side-only pricing text, CTAs that
-                  ship disabled, empty SPA shells, lazy-loaded content.
+                  ship disabled, empty SPA shells, lazy-loaded content. Routed by difficulty, not
+                  a single model: most of these are near-mechanical single-file patches and run on{" "}
+                  <span className="mono">gpt-5-nano</span>/<span className="mono">gpt-5-mini</span>
+                  ; the one case that usually spans a layout boundary (an empty SPA shell) stays
+                  on <span className="mono">claude-opus-5</span>, where patch quality matters more
+                  than the marginal cost. The credit price is the same regardless of which model
+                  actually ran it.
                 </td>
               </tr>
               <tr>
@@ -534,7 +540,7 @@ export async function middleware(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   if (!AI_CRAWLERS.some((c) => ua.includes(c))) return NextResponse.next();
 
-  const res = await fetch("https://agentread.dev/api/v1/read", {
+  const res = await fetch("https://agentread.tech/api/v1/read", {
     method: "POST",
     headers: {
       Authorization: \`Bearer \${process.env.AGENTREAD_API_KEY}\`,
@@ -553,7 +559,7 @@ export const config = { matcher: "/:path*" };`,
           />
           <p>
             This exact pattern (crawler UA detection → real distill → Markdown response) is what
-            runs on agentread.dev itself, in <code>src/proxy.ts</code>.
+            runs on agentread.tech itself, in <code>src/proxy.ts</code>.
           </p>
         </section>
 

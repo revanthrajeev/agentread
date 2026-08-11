@@ -170,7 +170,7 @@ export async function proxy(request: NextRequest) {
   if (skip) return;
 
   try {
-    const res = await fetch("https://agentread.dev/api/v1/read", {
+    const res = await fetch("https://agentread.tech/api/v1/read", {
       method: "POST",
       headers: {
         "content-type": "application/json",

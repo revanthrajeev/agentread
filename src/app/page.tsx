@@ -6,10 +6,32 @@ import Reveal from "@/components/site/Reveal";
 import CountUp from "@/components/site/CountUp";
 import Marquee from "@/components/site/Marquee";
 import CodeTabs from "@/components/site/CodeTabs";
-import { getPublicStats } from "@/lib/stats";
+import { getPublicStats, shouldShowPublicStats } from "@/lib/stats";
 import { KNOWN_AI_CRAWLERS } from "@/lib/serve/crawlers";
 
 const CRAWLER_COUNT = Object.keys(KNOWN_AI_CRAWLERS).length;
+
+/**
+ * The worked example in the Render Tax section. The headline multiplier is derived from these
+ * two figures rather than typed separately, so editing one payload number can never leave the
+ * headline claiming something the breakdown underneath it contradicts.
+ */
+/**
+ * Tools the MCP server actually registers, mirroring src/app/api/mcp/route.ts — which is the
+ * source of truth. Listed rather than counted by hand because the tile previously claimed 2
+ * while four were live, understating the product on the page that argues for its accuracy.
+ */
+const MCP_TOOLS = ["read_url", "score_url", "audit_site", "generate_llms_txt"];
+
+const EXAMPLE_RAW_KB = 812;
+const EXAMPLE_CLEAN_KB = 8;
+/**
+ * Guarded: a zero divisor would render "Infinity×", and a zero result is never a real claim.
+ * Floored, not rounded — 812/8 is 101.5, and a public claim should round *down* against
+ * ourselves rather than up.
+ */
+const PAYLOAD_MULTIPLIER =
+  EXAMPLE_CLEAN_KB > 0 ? Math.floor(EXAMPLE_RAW_KB / EXAMPLE_CLEAN_KB) : 100;
 
 const MCP_CLIENTS = [
   "Claude Code",
@@ -24,6 +46,7 @@ const MCP_CLIENTS = [
 
 export default async function Home() {
   const stats = await getPublicStats();
+  const showStats = shouldShowPublicStats(stats);
 
   return (
     <main>
@@ -84,7 +107,7 @@ export default async function Home() {
               <div className="term-body">
                 <div>
                   <span className="t-prompt">$</span> curl <span className="t-flag">-X POST</span>{" "}
-                  https://agentread.dev/api/v1/read \
+                  https://agentread.tech/api/v1/read \
                 </div>
                 <div>
                   &nbsp;&nbsp;<span className="t-flag">-H</span>{" "}
@@ -124,6 +147,9 @@ export default async function Home() {
           </Reveal>
         </div>
 
+        {/* Hidden wholesale below MIN_DISPLAY_STATS reads — see src/lib/stats.ts. Publishing
+            zeros is worse than publishing nothing; this reappears on its own once usage lands. */}
+        {showStats && (
         <div className="container hero-stats">
           <Reveal delay={1}>
             <div className="stat-tile glass">
@@ -148,9 +174,9 @@ export default async function Home() {
             <div className="stat-tile glass">
               <div className="stat-label">MCP tools live</div>
               <div className="stat-value">
-                <CountUp value={2} />
+                <CountUp value={MCP_TOOLS.length} />
               </div>
-              <div className="stat-sub">read_url · score_url</div>
+              <div className="stat-sub">{MCP_TOOLS.join(" · ")}</div>
             </div>
           </Reveal>
           <Reveal delay={4}>
@@ -163,6 +189,7 @@ export default async function Home() {
             </div>
           </Reveal>
         </div>
+        )}
       </header>
 
       <Marquee label="Speaks standard MCP — drops into any compatible client" items={MCP_CLIENTS} />
@@ -221,7 +248,7 @@ export default async function Home() {
                 <div className="cbar-row">
                   <div className="cbar-head">
                     <span className="cbar-name">Full page payload</span>
-                    <span className="cbar-val">812 KB</span>
+                    <span className="cbar-val">{EXAMPLE_RAW_KB} KB</span>
                   </div>
                   <div className="cbar-track neutral">
                     <div className="cbar-fill muted" style={{ width: "100%" }} />
@@ -267,7 +294,7 @@ export default async function Home() {
                 <div className="cbar-row">
                   <div className="cbar-head">
                     <span className="cbar-name">Clean Markdown payload</span>
-                    <span className="cbar-val">8 KB</span>
+                    <span className="cbar-val">{EXAMPLE_CLEAN_KB} KB</span>
                   </div>
                   <div className="cbar-track">
                     <div className="cbar-fill brand" style={{ width: "4%", minWidth: 6 }} />
@@ -306,7 +333,7 @@ export default async function Home() {
           <Reveal>
             <div className="hero-figure">
               <div className="num grad-text">
-                <CountUp value={101} suffix="×" />
+                <CountUp value={PAYLOAD_MULTIPLIER} fallback={100} suffix="×" />
               </div>
               <p className="cap">less payload on this example — the render tax, refunded</p>
             </div>
@@ -341,7 +368,7 @@ export default async function Home() {
                   with an explainable ReadScore and hallucination-risk flags on every response.
                 </p>
                 <div className="layer-code">
-                  curl -X POST https://agentread.dev/api/v1/read \{"\n"}
+                  curl -X POST https://agentread.tech/api/v1/read \{"\n"}
                   {"  "}-H &quot;Authorization: Bearer sk-ar-…&quot; \{"\n"}
                   {"  "}-d {"'"}{"{"}&quot;url&quot;: &quot;https://example.com&quot;{"}"}
                   {"'"}
@@ -431,7 +458,7 @@ export async function middleware(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   if (!AI_CRAWLERS.some((c) => ua.includes(c))) return NextResponse.next();
 
-  const res = await fetch("https://agentread.dev/api/v1/read", {
+  const res = await fetch("https://agentread.tech/api/v1/read", {
     method: "POST",
     headers: {
       Authorization: \`Bearer \${process.env.AGENTREAD_API_KEY}\`,
@@ -497,7 +524,7 @@ export const config = { matcher: "/:path*" };`,
                 <pre>{`{
   "mcpServers": {
     "agentread": {
-      "url": "https://agentread.dev/api/mcp",
+      "url": "https://agentread.tech/api/mcp",
       "headers": { "Authorization": "Bearer sk-ar-…" }
     }
   }
@@ -618,7 +645,7 @@ export const config = { matcher: "/:path*" };`,
               tabs={[
                 {
                   label: "cURL",
-                  code: `curl -X POST https://agentread.dev/api/v1/read \\
+                  code: `curl -X POST https://agentread.tech/api/v1/read \\
   -H "Authorization: Bearer $AGENTREAD_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"url": "https://example.com/pricing"}'
@@ -632,7 +659,7 @@ export const config = { matcher: "/:path*" };`,
 {
   "mcpServers": {
     "agentread": {
-      "url": "https://agentread.dev/api/mcp",
+      "url": "https://agentread.tech/api/mcp",
       "headers": { "Authorization": "Bearer sk-ar-…" }
     }
   }
@@ -648,14 +675,14 @@ export const config = { matcher: "/:path*" };`,
                   label: "Node SDK",
                   code: `// @agentread/node — not published yet.
 // The REST API above works today with any HTTP client.
-// Track publish status: agentread.dev/docs`,
+// Track publish status: agentread.tech/docs`,
                   roadmap: true,
                 },
                 {
                   label: "Python SDK",
                   code: `# agentread (PyPI) — not published yet.
 # The REST API above works today with requests/httpx.
-# Track publish status: agentread.dev/docs`,
+# Track publish status: agentread.tech/docs`,
                   roadmap: true,
                 },
               ]}

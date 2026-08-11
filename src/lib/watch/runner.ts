@@ -169,7 +169,7 @@ async function sendAlert(watch: WatchRow, payload: AlertPayload): Promise<void> 
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          from: process.env.ALERT_FROM_EMAIL ?? "AgentRead <alerts@agentread.dev>",
+          from: process.env.ALERT_FROM_EMAIL ?? "AgentRead <alerts@agentread.tech>",
           to: [watch.alert_email],
           subject: `ReadScore dropped ${Math.abs(payload.delta)} points on ${watch.host}`,
           text: [

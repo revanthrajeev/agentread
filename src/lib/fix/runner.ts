@@ -174,7 +174,7 @@ function buildPrBody(audit: AuditResult, results: FixResult[], costUsd: number):
   const lines = [
     `## What this changes`,
     ``,
-    `An [AgentRead](https://agentread.dev) audit of **${audit.host}** scored **${audit.avgScore}/100** for AI-agent readability across ${audit.pagesCrawled} pages. This PR fixes what could be fixed automatically.`,
+    `An [AgentRead](https://agentread.tech) audit of **${audit.host}** scored **${audit.avgScore}/100** for AI-agent readability across ${audit.pagesCrawled} pages. This PR fixes what could be fixed automatically.`,
     ``,
     `Nothing here changes what human visitors see — these are all changes to what exists in the server-rendered response.`,
     ``,

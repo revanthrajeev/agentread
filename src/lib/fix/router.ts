@@ -1,12 +1,19 @@
 import type { AuditResult, IssueRollup } from "@/lib/engine/crawl";
-import { estimateFixCostUsd } from "./pricing";
+import { estimateFixCostUsd, type FixModel } from "./pricing";
 import type { FixPlan, FixPlanItem, FixStrategy } from "./types";
 
 /**
- * The routing table. This is the single most important file for unit economics:
- * every issue routed to `deterministic` is a fix delivered at zero inference cost,
- * and every issue routed to `advisory` is inference we never spend on a change we
- * couldn't safely make anyway.
+ * The routing table. This is the single most important file for unit economics — in two
+ * layers now:
+ *
+ *  1. Strategy: every issue routed to `deterministic` is a fix delivered at zero inference
+ *     cost, and every issue routed to `advisory` is inference we never spend on a change
+ *     we couldn't safely make anyway.
+ *  2. Model: for issues that do need inference, which model. `empty_shell` is the one case
+ *     where getting the patch right matters more than the marginal cost — it stays on
+ *     Claude Opus. Everything else routes to GPT-5 nano or mini, which are 10-100x
+ *     cheaper and, for a scoped single-file patch against supplied context, sufficient.
+ *     See pricing.ts for the actual per-token rates this claim rests on.
  *
  * Routing is by issue *kind*, matched against the flag text the scoring engine
  * produces in src/lib/engine/read.ts. Adding a deduction there means adding a row here.
@@ -21,6 +28,8 @@ interface Route {
   match: RegExp;
   /** Input tokens an LLM fix for this issue typically needs (0 when deterministic). */
   tokenEstimate: number;
+  /** Which model handles this issue. Only meaningful when strategy is "llm". */
+  model?: FixModel;
 }
 
 const ROUTES: Route[] = [
@@ -60,6 +69,8 @@ const ROUTES: Route[] = [
       "Price and CTA text exists in the markup but not in the extracted text — it renders client-side only, so agents never see it. This needs a source change.",
     match: /price\/cta keywords found in raw html but not in extracted text/i,
     tokenEstimate: 45_000,
+    // Locating one price/CTA block from supplied context — well within a mini-tier model.
+    model: "gpt-5-mini",
   },
   {
     issueKey: "disabled_cta",
@@ -69,6 +80,8 @@ const ROUTES: Route[] = [
       "A buy/checkout button is disabled in the served markup and only enables after hydration, so agents read it as unavailable.",
     match: /buy\/checkout button appears disabled/i,
     tokenEstimate: 40_000,
+    // Near-mechanical: find a `disabled` prop tied to a hydration flag, remove it.
+    model: "gpt-5-nano",
   },
   {
     issueKey: "empty_shell",
@@ -78,6 +91,9 @@ const ROUTES: Route[] = [
       "Almost no text could be extracted — the page is an empty shell, a bot-wall, or a paywall to anything that doesn't run JavaScript.",
     match: /very little text content could be extracted/i,
     tokenEstimate: 50_000,
+    // The one case kept on Claude Opus — usually means restructuring rendering
+    // strategy across a layout/page boundary, not editing one clearly-scoped block.
+    model: "claude-opus-5",
   },
   {
     issueKey: "lazy_content",
@@ -87,6 +103,8 @@ const ROUTES: Route[] = [
       "Lazy-loaded sections never become visible to a reader that doesn't scroll or run JavaScript.",
     match: /lazy-loaded content detected/i,
     tokenEstimate: 30_000,
+    // Removing a `loading="lazy"` / IntersectionObserver gate — mechanical.
+    model: "gpt-5-nano",
   },
   {
     issueKey: "script_heavy",
@@ -158,6 +176,7 @@ export function planFixes(auditId: string, audit: AuditResult): FixPlan {
       description: route.description,
       affectedUrls: urlsForIssue(audit, issue.text),
       estimatedTokens: route.tokenEstimate,
+      model: route.model,
     });
   }
 
@@ -194,8 +213,11 @@ export function planFixes(auditId: string, audit: AuditResult): FixPlan {
     deterministicCount: items.filter((i) => i.strategy === "deterministic").length,
     llmCount: llmItems.length,
     advisoryCount: items.filter((i) => i.strategy === "advisory").length,
+    // Each item priced by its own routed model, not a single blended default — mixing
+    // Opus and GPT-5 nano in one job means the sum has to price them individually or the
+    // estimate systematically overstates cost.
     estimatedCostUsd: llmItems.reduce(
-      (sum, i) => sum + estimateFixCostUsd(i.estimatedTokens),
+      (sum, i) => sum + estimateFixCostUsd(i.estimatedTokens, i.model),
       0
     ),
   };
@@ -203,11 +225,12 @@ export function planFixes(auditId: string, audit: AuditResult): FixPlan {
 
 /** Exposed for tests and for the pricing page's "what gets fixed automatically" table. */
 export function routingTable(): ReadonlyArray<Omit<Route, "match">> {
-  return ROUTES.map(({ issueKey, strategy, title, description, tokenEstimate }) => ({
+  return ROUTES.map(({ issueKey, strategy, title, description, tokenEstimate, model }) => ({
     issueKey,
     strategy,
     title,
     description,
     tokenEstimate,
+    model,
   }));
 }

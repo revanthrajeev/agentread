@@ -46,6 +46,7 @@ import {
   CREDIT_PRICE_USD,
   estimateFixCostUsd,
   MAX_COST_PER_JOB_USD,
+  MODEL_PROVIDER,
   MODEL_RATES,
 } from "../src/lib/fix/pricing";
 import { fixLlmsTxt, fixRobotsTxt, fixServeMiddleware } from "../src/lib/fix/deterministic";
@@ -368,16 +369,45 @@ async function main() {
     !checkMargin(1, CREDIT_PRICE_USD * 2).allowed
   );
 
+  section("Autofix — cost model (multi-provider)");
+  ok("gpt-5-nano rates are $0.05/$0.40 per MTok", MODEL_RATES["gpt-5-nano"].input === 0.05 && MODEL_RATES["gpt-5-nano"].output === 0.4);
+  ok("gpt-5-mini rates are $0.25/$2 per MTok", MODEL_RATES["gpt-5-mini"].input === 0.25 && MODEL_RATES["gpt-5-mini"].output === 2);
+  ok("Claude models map to the anthropic provider", (["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"] as const).every((m) => MODEL_PROVIDER[m] === "anthropic"));
+  ok("GPT models map to the openai provider", (["gpt-5-mini", "gpt-5-nano"] as const).every((m) => MODEL_PROVIDER[m] === "openai"));
+  ok(
+    "an OpenAI-routed fix has no cache terms",
+    costUsd({ inputTokens: 1000, outputTokens: 0, cacheCreationInputTokens: 1000, cacheReadInputTokens: 1000 }, "gpt-5-nano") ===
+      costUsd({ inputTokens: 1000, outputTokens: 0, cacheCreationInputTokens: 0, cacheReadInputTokens: 0 }, "gpt-5-nano")
+  );
+  const opusFix = estimateFixCostUsd(45_000, "claude-opus-5");
+  const nanoFix = estimateFixCostUsd(45_000, "gpt-5-nano");
+  ok(
+    "routing a fix to gpt-5-nano is at least 10x cheaper than opus for the same input size",
+    nanoFix * 10 < opusFix,
+    `nano $${nanoFix.toFixed(4)} vs opus $${opusFix.toFixed(4)}`
+  );
+  ok("a nano-routed fix still clears margin easily", ((CREDIT_PRICE_USD - nanoFix) / CREDIT_PRICE_USD) * 100 > 99);
+
   section("Autofix — routing (the margin lever)");
   const table = routingTable();
   ok("every route has a strategy", table.every((r) => ["deterministic", "llm", "advisory"].includes(r.strategy)));
   ok("deterministic routes estimate zero tokens", table.filter((r) => r.strategy === "deterministic").every((r) => r.tokenEstimate === 0));
   ok("advisory routes estimate zero tokens", table.filter((r) => r.strategy === "advisory").every((r) => r.tokenEstimate === 0));
   ok("llm routes estimate non-zero tokens", table.filter((r) => r.strategy === "llm").every((r) => r.tokenEstimate > 0));
+  ok("every llm route has a model assigned", table.filter((r) => r.strategy === "llm").every((r) => !!r.model));
   ok("issue keys are unique", new Set(table.map((r) => r.issueKey)).size === table.length);
   ok("missing llms.txt routes to the free path", table.find((r) => r.issueKey === "missing_llms_txt")?.strategy === "deterministic");
   ok("JS-only content routes to the metered path", table.find((r) => r.issueKey === "js_only_content")?.strategy === "llm");
   ok("script-heavy is advisory, never patched blind", table.find((r) => r.issueKey === "script_heavy")?.strategy === "advisory");
+  ok(
+    "most llm routes are cost-routed to GPT, not defaulted to Opus",
+    table.filter((r) => r.strategy === "llm" && r.model && MODEL_PROVIDER[r.model] === "openai").length >
+      table.filter((r) => r.strategy === "llm" && r.model && MODEL_PROVIDER[r.model] === "anthropic").length
+  );
+  ok(
+    "the hardest issue (empty_shell) is kept on Claude for quality, not cost-routed away",
+    table.find((r) => r.issueKey === "empty_shell")?.model === "claude-opus-5"
+  );
 
   const fakeAudit = {
     ...fixture,

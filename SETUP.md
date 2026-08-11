@@ -118,7 +118,7 @@ locked behind `INTERNAL_SERVE_SECRET` since it isn't part of the public API.
 
 ## 5. Buy the domain (optional but recommended before publicizing)
 
-Register `agentread.dev` (or `.com`/`.ai`) — Vercel lets you attach a custom domain for free
+Register `agentread.tech` (or `.com`/`.ai`) — Vercel lets you attach a custom domain for free
 once purchased through any registrar (Namecheap, Porkbun, Google Domains successor Squarespace).
 Point its DNS at Vercel per their dashboard instructions, then update
 `NEXT_PUBLIC_SITE_URL` + the Supabase/Google redirect URLs to match.

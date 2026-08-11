@@ -1,4 +1,5 @@
 import type { ReadFlag } from "@/lib/engine/read";
+import type { FixModel } from "./pricing";
 
 /**
  * Autofix — turns a ReadScore finding into an actual code change.
@@ -29,6 +30,8 @@ export interface FixPlanItem {
   affectedUrls: string[];
   /** Rough input-token estimate for LLM items; 0 for deterministic ones. */
   estimatedTokens: number;
+  /** Which model handles this issue, for `llm` items — set by router.ts's routing table. */
+  model?: FixModel;
 }
 
 export interface FixPlan {

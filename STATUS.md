@@ -95,7 +95,7 @@ confirmed via build output now showing `ƒ Proxy (Middleware)` as a registered r
 | Create a Google OAuth client | Tied to your Google Cloud account | `SETUP.md` §2 |
 | Push to a GitHub repo | Needs a repo you own | `SETUP.md` §3 |
 | Deploy to Vercel | Free tier, needs your account | `SETUP.md` §4 |
-| Buy a domain (optional) | agentread.dev/.com/.ai | `SETUP.md` §5 |
+| Buy a domain (optional) | agentread.tech/.com/.ai | `SETUP.md` §5 |
 
 None of this requires more engineering — it's ~20 minutes of account setup, walked through
 step by step in `SETUP.md`.

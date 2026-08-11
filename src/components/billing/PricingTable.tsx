@@ -58,7 +58,7 @@ export default function PricingTable({
                 ))}
               </ul>
               {plan.id === "enterprise" ? (
-                <a className="btn btn-ghost" href="mailto:sales@agentread.dev">
+                <a className="btn btn-ghost" href="mailto:sales@agentread.tech">
                   Talk to us
                 </a>
               ) : plan.id === "free" ? (

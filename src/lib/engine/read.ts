@@ -3,6 +3,7 @@ import { Readability } from "@mozilla/readability";
 import TurndownService from "turndown";
 // @ts-expect-error — no bundled types for the gfm plugin
 import { gfm } from "turndown-plugin-gfm";
+import { computeSeoScore } from "./seo";
 
 export interface ReadFlag {
   severity: "high" | "medium" | "low" | "ok";
@@ -22,6 +23,9 @@ export interface ReadResult {
   readScore: number;
   hallucinationRisk: "low" | "medium" | "high";
   flags: ReadFlag[];
+  /** Traditional on-page SEO score — see src/lib/engine/seo.ts. Independent of readScore. */
+  seoScore: number;
+  seoFlags: ReadFlag[];
   latencyMs: number;
   cache: "HIT" | "MISS";
 }
@@ -92,6 +96,9 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
     /price|buy now|add to cart/i.test(html);
   const hasDisabledCta = /disabled[^>]*>[^<]*(buy|checkout|add to cart)/i.test(html);
   const hasLazyContent = /loading=["']lazy["']|data-lazy|IntersectionObserver/i.test(html);
+  // Also computed here, before Readability.parse() destructively strips the DOM below —
+  // computeSeoScore needs the real <h1>/<img>/<link> tags Readability discards.
+  const { seoScore, seoFlags } = computeSeoScore(doc, html);
 
   let llmsTxtExists = false;
   try {
@@ -184,6 +191,8 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
     readScore: score,
     hallucinationRisk,
     flags,
+    seoScore,
+    seoFlags,
     latencyMs: Date.now() - t0,
     cache: "MISS",
   };

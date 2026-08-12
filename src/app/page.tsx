@@ -51,7 +51,7 @@ export default async function Home() {
   return (
     <main>
       {/* ======================= HERO ======================= */}
-      <header className="hero">
+      <header className="hero" id="top">
         <div className="container hero-grid">
           <div>
             <Reveal inline>
@@ -93,6 +93,14 @@ export default async function Home() {
                 </svg>
                 1,000 free reads / month · no credit card · MCP server included
               </p>
+            </Reveal>
+            <Reveal delay={5}>
+              <div style={{ marginTop: 28 }}>
+                <p className="hero-note" style={{ marginBottom: 10, opacity: 0.7 }}>
+                  Or skip the pitch — paste your URL, see your real ReadScore right now:
+                </p>
+                <ReadScanWidget />
+              </div>
             </Reveal>
           </div>
 
@@ -872,9 +880,12 @@ export const config = { matcher: "/:path*" };`,
                     How readable are you to agents? Find out for real.
                   </h2>
                   <p className="lead" style={{ marginBottom: 20 }}>
-                    This calls the live Read API right now — no demo data, no waitlist.
+                    This calls the live Read API right now — no demo data, no waitlist. Already ran
+                    one? Here&apos;s exactly what the number means.
                   </p>
-                  <ReadScanWidget />
+                  <a href="#top" className="btn btn-ghost">
+                    ↑ Run it again from the top
+                  </a>
                 </div>
                 <div className="terminal">
                   <div className="term-bar">

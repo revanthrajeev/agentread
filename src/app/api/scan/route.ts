@@ -19,6 +19,8 @@ export async function POST(request: Request) {
       flags: result.flags,
       seoScore: result.seoScore,
       seoFlags: result.seoFlags,
+      protocolScore: result.protocolScore,
+      protocolFlags: result.protocolFlags,
       hybridScore: Math.round((result.readScore + result.seoScore) / 2),
       htmlBytes: result.htmlBytes,
       markdownBytes: result.markdownBytes,

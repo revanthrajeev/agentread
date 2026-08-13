@@ -62,6 +62,54 @@ export interface ParsedPatch {
   confident: boolean;
 }
 
+/**
+ * A self-contained prompt export — no repo access required. For users who won't connect
+ * GitHub or the desktop app at all: paste this into whatever coding agent you already have
+ * open locally (Claude Code, Cursor, Copilot, ...) and it does the fix itself, on your own
+ * machine, with nothing sent to AgentRead. This is the free, zero-inference-cost floor
+ * under Autofix — the credit-metered version is faster and unattended, this one is manual
+ * but costs nothing and needs no connection at all.
+ */
+export function buildExportPrompt(
+  plan: { items: Array<{ issueKey: string; strategy: string; severity: string; title: string; description: string; affectedUrls: string[] }> },
+  audit: { host: string; avgScore: number | null }
+): string {
+  const actionable = plan.items.filter((i) => i.strategy !== "advisory");
+  if (actionable.length === 0) {
+    return `# AgentRead findings for ${audit.host}\n\nNo actionable findings — ReadScore is already clean.`;
+  }
+
+  const lines = [
+    `# Make ${audit.host} readable to AI agents`,
+    ``,
+    `AgentRead scored this site ${audit.avgScore ?? "?"}/100 for AI-agent readability. Fix the findings below, one at a time.`,
+    ``,
+    `## Rules`,
+    `- Change as little as possible per finding — this is not licence to refactor.`,
+    `- Never alter what human visitors see. These are all about what exists in the server-rendered response, not visual design.`,
+    `- Match the surrounding code: formatting, naming, imports, idioms.`,
+    `- If a finding doesn't clearly apply after you look at the actual code, skip it rather than guessing.`,
+    ``,
+    `## Findings (${actionable.length})`,
+    ``,
+  ];
+
+  actionable.forEach((item, i) => {
+    lines.push(`### ${i + 1}. ${item.title} [${item.severity}]`);
+    lines.push(``);
+    lines.push(item.description);
+    if (item.affectedUrls.length) {
+      lines.push(``);
+      lines.push(`Affected pages:`);
+      for (const u of item.affectedUrls) lines.push(`- ${u}`);
+    }
+    lines.push(``);
+  });
+
+  lines.push(`---`, ``, `Re-run the AgentRead scan after fixing these to confirm the score moved.`);
+  return lines.join("\n");
+}
+
 /** Builds the two prompt sections every provider needs: the cacheable repo prefix and the finding. */
 export function buildFixPrompt(
   repo: { owner: string; repo: string; framework: string; defaultBranch: string; tree: string[]; keyFiles: Array<{ path: string; contents: string }> },

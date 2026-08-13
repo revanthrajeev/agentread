@@ -4,6 +4,7 @@ import TurndownService from "turndown";
 // @ts-expect-error — no bundled types for the gfm plugin
 import { gfm } from "turndown-plugin-gfm";
 import { computeSeoScore } from "./seo";
+import { computeProtocolScore } from "./protocols";
 
 export interface ReadFlag {
   severity: "high" | "medium" | "low" | "ok";
@@ -26,6 +27,9 @@ export interface ReadResult {
   /** Traditional on-page SEO score — see src/lib/engine/seo.ts. Independent of readScore. */
   seoScore: number;
   seoFlags: ReadFlag[];
+  /** Agent-protocol manifest discoverability (MCP/A2A) — see src/lib/engine/protocols.ts. */
+  protocolScore: number;
+  protocolFlags: ReadFlag[];
   latencyMs: number;
   cache: "HIT" | "MISS";
 }
@@ -99,6 +103,7 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
   // Also computed here, before Readability.parse() destructively strips the DOM below —
   // computeSeoScore needs the real <h1>/<img>/<link> tags Readability discards.
   const { seoScore, seoFlags } = computeSeoScore(doc, html);
+  const { protocolScore, protocolFlags } = await computeProtocolScore(url);
 
   let llmsTxtExists = false;
   try {
@@ -193,6 +198,8 @@ export async function readUrl(rawUrl: string, opts: { fresh?: boolean } = {}): P
     flags,
     seoScore,
     seoFlags,
+    protocolScore,
+    protocolFlags,
     latencyMs: Date.now() - t0,
     cache: "MISS",
   };

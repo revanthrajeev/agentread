@@ -39,7 +39,7 @@ export default async function PublicReportPage({
   const result = await loadSharedAudit(token);
   if (!result) notFound();
 
-  const { audit, pages } = result;
+  const { audit, pages, whiteLabelOrg } = result;
   const issues: IssueRow[] = Array.isArray(audit.top_issues) ? audit.top_issues : [];
   const reduction =
     Number(audit.total_html_bytes) > 0
@@ -49,7 +49,7 @@ export default async function PublicReportPage({
   return (
     <main className="container section">
       <div className="section-head">
-        <div className="eyebrow">Agent readability report</div>
+        <div className="eyebrow">{whiteLabelOrg ? `Prepared by ${whiteLabelOrg}` : "Agent readability report"}</div>
         <h1 className="title">{audit.host}</h1>
         <p className="lead">
           {audit.pages_crawled} pages analysed on{" "}
@@ -154,23 +154,25 @@ export default async function PublicReportPage({
         </div>
       </section>
 
-      <section className="cta-final">
-        <h2 className="title" style={{ fontSize: 28 }}>
-          Run this on your own site
-        </h2>
-        <p className="lead">
-          Free scan, no card. See exactly which pages an AI agent can&rsquo;t read — and generate the
-          llms.txt that fixes it.
-        </p>
-        <div className="hero-cta-row">
-          <Link className="btn btn-primary btn-lg" href="/">
-            Scan my site
-          </Link>
-          <Link className="btn btn-ghost btn-lg" href="/pricing">
-            See pricing
-          </Link>
-        </div>
-      </section>
+      {!whiteLabelOrg && (
+        <section className="cta-final">
+          <h2 className="title" style={{ fontSize: 28 }}>
+            Run this on your own site
+          </h2>
+          <p className="lead">
+            Free scan, no card. See exactly which pages an AI agent can&rsquo;t read — and generate the
+            llms.txt that fixes it.
+          </p>
+          <div className="hero-cta-row">
+            <Link className="btn btn-primary btn-lg" href="/">
+              Scan my site
+            </Link>
+            <Link className="btn btn-ghost btn-lg" href="/pricing">
+              See pricing
+            </Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

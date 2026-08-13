@@ -93,7 +93,7 @@ export async function loadSharedAudit(token: string) {
 
     const { data: share } = await admin
       .from("audit_shares")
-      .select("audit_id")
+      .select("audit_id, white_label_org")
       .eq("token", token)
       .maybeSingle();
 
@@ -113,7 +113,51 @@ export async function loadSharedAudit(token: string) {
       .eq("audit_id", share.audit_id)
       .order("read_score", { ascending: true });
 
-    return { audit, pages: pages ?? [] };
+    return { audit, pages: pages ?? [], whiteLabelOrg: share.white_label_org ?? null };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sets (or clears, with org=null) the white-label org name on an audit's share, creating
+ * the share if the audit doesn't have one yet. Ownership-checked against audits.user_id —
+ * audit_shares has no user_id of its own, so this joins through the audit it belongs to.
+ */
+export async function setShareWhiteLabel(
+  auditId: string,
+  userId: string,
+  org: string | null
+): Promise<{ token: string } | null> {
+  try {
+    const admin = createAdminClient();
+
+    const { data: audit } = await admin
+      .from("audits")
+      .select("id")
+      .eq("id", auditId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!audit) return null;
+
+    const { data: existing } = await admin
+      .from("audit_shares")
+      .select("token")
+      .eq("audit_id", auditId)
+      .maybeSingle();
+
+    if (existing) {
+      await admin.from("audit_shares").update({ white_label_org: org }).eq("token", existing.token);
+      return { token: existing.token };
+    }
+
+    const token = randomBytes(9).toString("base64url");
+    const { error } = await admin
+      .from("audit_shares")
+      .insert({ token, audit_id: auditId, white_label_org: org });
+    if (error) return null;
+
+    return { token };
   } catch {
     return null;
   }

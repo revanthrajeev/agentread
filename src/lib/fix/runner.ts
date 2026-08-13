@@ -4,7 +4,7 @@ import { fixWithLlm, isAutofixConfigured } from "./llm";
 import { checkMargin, formatUsd, MAX_COST_PER_JOB_USD } from "./pricing";
 import { planFixes } from "./router";
 import type { FileChange, FixPlan, FixResult } from "./types";
-import { loadRepoContext, openPullRequest, readFile, type RepoRef } from "@/lib/github/client";
+import type { SourceAdapter } from "./adapter";
 
 /**
  * Orchestrates a full Autofix run: plan → deterministic fixes → metered fixes → one PR.
@@ -49,8 +49,7 @@ function candidateFilesFor(issueKey: string, tree: string[]): string[] {
 export async function runAutofix(
   auditId: string,
   audit: AuditResult,
-  githubToken: string,
-  repoRef: RepoRef,
+  adapter: SourceAdapter,
   opts: { maxLlmFixes?: number; dryRun?: boolean } = {}
 ): Promise<AutofixJobResult> {
   const plan = planFixes(auditId, audit);
@@ -71,7 +70,7 @@ export async function runAutofix(
     };
   }
 
-  const repo = await loadRepoContext(githubToken, repoRef);
+  const repo = await adapter.loadContext();
 
   // ---- Deterministic pass: always runs, always free ------------------------------
   for (const item of plan.items.filter((i) => i.strategy === "deterministic")) {
@@ -81,7 +80,7 @@ export async function runAutofix(
         break;
       case "missing_ai_crawler_rules": {
         const dir = repo.framework === "sveltekit" || repo.framework === "gatsby" ? "static" : "public";
-        const existing = await readFile(githubToken, repoRef, `${dir}/robots.txt`, repo.defaultBranch);
+        const existing = await adapter.readFile(`${dir}/robots.txt`);
         results.push(fixRobotsTxt(repo, existing));
         break;
       }
@@ -117,7 +116,7 @@ export async function runAutofix(
       const paths = candidateFilesFor(item.issueKey, repo.tree);
       const relevantFiles: Array<{ path: string; contents: string }> = [];
       for (const p of paths) {
-        const contents = await readFile(githubToken, repoRef, p, repo.defaultBranch);
+        const contents = await adapter.readFile(p);
         if (contents) relevantFiles.push({ path: p, contents: contents.slice(0, 30_000) });
       }
 
@@ -152,7 +151,7 @@ export async function runAutofix(
     };
   }
 
-  const pullRequest = await openPullRequest(githubToken, repo, allChanges, {
+  const pullRequest = await adapter.applyChanges(allChanges, {
     title: `Make ${audit.host} readable to AI agents (ReadScore ${audit.avgScore}/100)`,
     body: buildPrBody(audit, results, totalCostUsd),
   });

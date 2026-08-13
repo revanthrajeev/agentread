@@ -1,86 +1,71 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { extractBearerToken, verifyApiKey } from "@/lib/auth/apiKey";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { open } from "@/lib/crypto/secrets";
 import { loadAuditForGeneration } from "@/lib/audit/store";
 import { runAutofix } from "@/lib/fix/runner";
-import { githubAdapter } from "@/lib/fix/adapter";
+import { localAdapter } from "@/lib/fix/adapter";
 import { planFixes } from "@/lib/fix/router";
 import { CREDIT_PRICE_USD } from "@/lib/fix/pricing";
+import type { RepoContext } from "@/lib/fix/types";
 
 /**
- * Runs Autofix against a stored audit and opens a pull request.
+ * Autofix against a local folder, for the desktop app. Same plan → deterministic → LLM
+ * pipeline as /api/fix, but there's no GitHub connection and no PR: the desktop app has
+ * already read the relevant files off the user's disk and sends their contents here; this
+ * route returns FileChange[] for the app to write straight back to disk. Exists so a user
+ * who won't grant GitHub repo access still gets Autofix — the trade they're making is a
+ * one-time upload of the specific files touched, not standing repo access.
  *
- * Credit accounting is deliberately ordered: credits are reserved *before* any inference
- * runs (so a user can't start ten concurrent jobs on one credit), and unused reservations
- * are refunded afterwards. Deterministic fixes never consume a credit.
+ * API-key authenticated (Authorization: Bearer sk-ar-...), not session-cookie, since the
+ * desktop app has no browser session.
  */
 
 export const maxDuration = 300;
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+interface LocalFile {
+  path: string;
+  contents: string;
+}
 
-  if (!user) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+export async function POST(request: Request) {
+  const token = extractBearerToken(request);
+  if (!token) {
+    return NextResponse.json(
+      { error: "Missing Authorization header. Use: Authorization: Bearer sk-ar-..." },
+      { status: 401 }
+    );
+  }
+
+  const auth = await verifyApiKey(token);
+  if (!auth) return NextResponse.json({ error: "Invalid or revoked API key." }, { status: 401 });
 
   const body = await request.json().catch(() => null);
   const auditId = typeof body?.audit_id === "string" ? body.audit_id : null;
-  const connectionId = typeof body?.connection_id === "string" ? body.connection_id : null;
+  const framework = typeof body?.framework === "string" ? body.framework : "unknown";
+  const tree = Array.isArray(body?.tree) ? (body.tree as string[]) : [];
+  const keyFiles = Array.isArray(body?.key_files) ? (body.key_files as LocalFile[]) : [];
+  const files = Array.isArray(body?.files) ? (body.files as LocalFile[]) : [];
   const dryRun = body?.dry_run === true;
 
   if (!auditId) {
     return NextResponse.json({ error: "Missing required field: audit_id" }, { status: 400 });
   }
 
-  const audit = await loadAuditForGeneration(auditId, user.id);
+  const audit = await loadAuditForGeneration(auditId, auth.userId);
   if (!audit) return NextResponse.json({ error: "Audit not found." }, { status: 404 });
 
   const plan = planFixes(auditId, audit);
 
-  // A plan-only request costs nothing and needs no repo — used by the UI to show what
-  // would happen, and what it would cost, before the user commits a credit.
   if (body?.plan_only === true) {
     return NextResponse.json({ plan, credit_price_usd: CREDIT_PRICE_USD });
   }
 
   const admin = createAdminClient();
 
-  const { data: connection } = await admin
-    .from("github_connections")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .order("connected_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const chosen = connectionId
-    ? (
-        await admin
-          .from("github_connections")
-          .select("*")
-          .eq("id", connectionId)
-          .eq("user_id", user.id)
-          .maybeSingle()
-      ).data
-    : connection;
-
-  if (!chosen) {
-    return NextResponse.json(
-      { error: "No GitHub repository connected. Connect one first.", code: "no_connection" },
-      { status: 400 }
-    );
-  }
-
-  // Reserve credits up front. `consume_autofix_credits` refuses to go negative, so two
-  // concurrent jobs cannot both spend the same last credit.
   let reserved = 0;
   if (plan.llmCount > 0 && !dryRun) {
     const { data: remaining } = await admin.rpc("consume_autofix_credits", {
-      p_user_id: user.id,
+      p_user_id: auth.userId,
       p_amount: plan.llmCount,
     });
 
@@ -100,9 +85,9 @@ export async function POST(request: Request) {
   const { data: job } = await admin
     .from("fix_jobs")
     .insert({
-      user_id: user.id,
+      user_id: auth.userId,
       audit_id: auditId,
-      connection_id: chosen.id,
+      connection_id: null,
       host: audit.host,
       status: "running",
       deterministic_count: plan.deterministicCount,
@@ -113,24 +98,21 @@ export async function POST(request: Request) {
     .single();
 
   try {
-    const token = open({
-      ciphertext: chosen.token_ciphertext,
-      iv: chosen.token_iv,
-      tag: chosen.token_tag,
-    });
+    const ctx: RepoContext = {
+      owner: "local",
+      repo: "local",
+      defaultBranch: "local",
+      tree,
+      framework,
+      keyFiles,
+    };
+    const fileMap = new Map(files.map((f) => [f.path, f.contents]));
 
-    const result = await runAutofix(
-      auditId,
-      audit,
-      githubAdapter(token, { owner: chosen.owner, repo: chosen.repo }),
-      { dryRun }
-    );
+    const result = await runAutofix(auditId, audit, localAdapter(ctx, fileMap), { dryRun });
 
-    // Refund whatever was reserved but not spent — a fix the model declined to make
-    // must not be billed.
     const unused = reserved - result.creditsConsumed;
     if (unused > 0) {
-      await admin.rpc("grant_autofix_credits", { p_user_id: user.id, p_amount: unused });
+      await admin.rpc("grant_autofix_credits", { p_user_id: auth.userId, p_amount: unused });
     }
 
     const applied = result.results.filter((r) => r.ok).length;
@@ -146,9 +128,6 @@ export async function POST(request: Request) {
           cost_usd: result.totalCostUsd,
           credits_consumed: result.creditsConsumed,
           revenue_usd: result.creditsConsumed * CREDIT_PRICE_USD,
-          pr_url: result.pullRequest?.url ?? null,
-          pr_number: result.pullRequest?.number ?? null,
-          branch: result.pullRequest?.branch ?? null,
           stopped_early: result.stoppedEarly,
           error: result.error ?? null,
           completed_at: new Date().toISOString(),
@@ -158,7 +137,7 @@ export async function POST(request: Request) {
       await admin.from("fix_attempts").insert(
         result.results.map((r) => ({
           job_id: job.id,
-          user_id: user.id,
+          user_id: auth.userId,
           issue_key: r.issueKey,
           strategy: r.strategy,
           title: r.title,
@@ -175,14 +154,12 @@ export async function POST(request: Request) {
       );
     }
 
-    await admin
-      .from("github_connections")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("id", chosen.id);
+    // No PR to open — the desktop app writes these to disk itself.
+    const changes = result.results.filter((r) => r.ok).flatMap((r) => r.changes);
 
     return NextResponse.json({
       job_id: job?.id ?? null,
-      pull_request: result.pullRequest,
+      changes,
       applied,
       skipped,
       credits_consumed: result.creditsConsumed,
@@ -199,19 +176,16 @@ export async function POST(request: Request) {
       })),
     });
   } catch (err) {
-    // Refund the full reservation — a job that threw produced nothing to bill for.
-    if (reserved > 0) {
-      await admin.rpc("grant_autofix_credits", { p_user_id: user.id, p_amount: reserved });
-    }
-
-    const message = err instanceof Error ? err.message : "Autofix failed";
     if (job) {
       await admin
         .from("fix_jobs")
-        .update({ status: "failed", error: message, completed_at: new Date().toISOString() })
+        .update({ status: "failed", error: err instanceof Error ? err.message : "Unknown error" })
         .eq("id", job.id);
     }
-
+    if (reserved > 0) {
+      await admin.rpc("grant_autofix_credits", { p_user_id: auth.userId, p_amount: reserved });
+    }
+    const message = err instanceof Error ? err.message : "Local fix failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

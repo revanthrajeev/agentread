@@ -1,0 +1,12 @@
+# Well-known YC-alumni company homepages — a small honest pilot, not the full 250-site
+# study. Scale this list up before publishing a "we audited N startups" claim.
+https://stripe.com
+https://airbnb.com
+https://dropbox.com
+https://reddit.com
+https://coinbase.com
+https://instacart.com
+https://gitlab.com
+https://zapier.com
+https://doordash.com
+https://twitch.tv

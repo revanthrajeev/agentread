@@ -29,6 +29,7 @@ export const metadata: Metadata = {
   title: "AgentRead — Make your website readable to AI agents",
   description:
     "AgentRead serves every AI agent clean, scored Markdown — same content, 100x fewer tokens, one line of middleware.",
+  alternates: { canonical: "/" },
   openGraph: {
     title: "AgentRead — Make your website readable to AI agents",
     description: "Clean, scored Markdown for AI agents. One line of middleware. 100x fewer tokens.",
@@ -36,10 +37,48 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Organization + SoftwareApplication JSON-LD — schema.org types, not invented. Verified
+ * shape (both are standard, widely-documented schema.org types, unlike the unverified
+ * "MCP Server Card" convention deliberately left unpublished until it's actually checked
+ * against a real spec — see the note in .well-known/ai-catalog.json/route.ts).
+ */
+function structuredData(base: string) {
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${base}#org`,
+        name: "AgentRead",
+        url: base,
+        logo: `${base}/favicon.ico`,
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: "AgentRead",
+        url: base,
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Web",
+        description:
+          "Serves every AI agent clean, scored Markdown while humans see your site untouched — one line of middleware, 100x fewer tokens.",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        publisher: { "@id": `${base}#org` },
+      },
+    ],
+  };
+}
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const base = resolveSiteUrl();
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable} ${mono.variable} h-full`}>
       <body className="flex min-h-full flex-col antialiased">
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData(base)) }}
+        />
         <div className="backdrop">
           <div className="grid-bg" />
           <div className="orb orb-1" />

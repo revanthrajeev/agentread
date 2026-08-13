@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "Pricing — AgentRead",
   description:
     "Score your site's AI-agent readability, fix what's broken, and prove it improved. Free to start; Pro from $29/mo.",
+  alternates: { canonical: "/pricing" },
 };
 
 export default async function PricingPage() {

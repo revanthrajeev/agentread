@@ -1,4 +1,16 @@
+import type { Metadata } from "next";
 import CodeTabs from "@/components/site/CodeTabs";
+
+/**
+ * Without this the page inherited the root layout's title, so /, /docs and /playground all
+ * shipped the same <title> — a duplicate-title problem on a site that sells AI readability.
+ */
+export const metadata: Metadata = {
+  title: "Docs — AgentRead",
+  description:
+    "Read API, Serve middleware, MCP server and ReadScore reference — how to score a URL, serve clean Markdown to AI crawlers, and read every deduction.",
+  alternates: { canonical: "/docs" },
+};
 
 export default function DocsPage() {
   return (

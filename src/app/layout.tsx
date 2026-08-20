@@ -26,13 +26,14 @@ function resolveSiteUrl(): string {
 
 export const metadata: Metadata = {
   metadataBase: new URL(resolveSiteUrl()),
-  title: "AgentRead — Make your website readable to AI agents",
+  title: "AgentRead — AI search visibility you can actually fix",
   description:
-    "AgentRead serves every AI agent clean, scored Markdown — same content, 100x fewer tokens, one line of middleware.",
+    "See what ChatGPT, Claude and Perplexity actually read on your site, find out why you're missing from AI answers, and ship the fix as a pull request.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "AgentRead — Make your website readable to AI agents",
-    description: "Clean, scored Markdown for AI agents. One line of middleware. 100x fewer tokens.",
+    title: "AgentRead — AI search visibility you can actually fix",
+    description:
+      "Other tools tell you you're invisible in AI answers. AgentRead tells you why, in the markup, and ships the fix.",
     images: ["/og.png"],
   },
 };
@@ -58,10 +59,10 @@ function structuredData(base: string) {
         "@type": "SoftwareApplication",
         name: "AgentRead",
         url: base,
-        applicationCategory: "DeveloperApplication",
+        applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description:
-          "Serves every AI agent clean, scored Markdown while humans see your site untouched — one line of middleware, 100x fewer tokens.",
+          "AI search visibility platform: audits what AI crawlers can actually read on your site, scores every page, and ships the fix as a pull request.",
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         publisher: { "@id": `${base}#org` },
       },

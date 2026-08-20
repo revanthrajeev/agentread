@@ -7,7 +7,15 @@ import Marquee from "@/components/site/Marquee";
 import CodeTabs from "@/components/site/CodeTabs";
 import { getPublicStats, shouldShowPublicStats } from "@/lib/stats";
 import { KNOWN_AI_CRAWLERS } from "@/lib/serve/crawlers";
+import { headers } from "next/headers";
 import { PLANS } from "@/lib/billing/plans";
+import {
+  countryFromHeaders,
+  formatMoney,
+  priceFor,
+  resolveDisplayCurrency,
+} from "@/lib/billing/currency";
+import { currenciesFor } from "@/lib/billing/registry";
 
 const CRAWLER_COUNT = Object.keys(KNOWN_AI_CRAWLERS).length;
 
@@ -55,6 +63,9 @@ const MCP_CLIENTS = [
 export default async function Home() {
   const stats = await getPublicStats();
   const showStats = shouldShowPublicStats(stats);
+
+  // Shared with /pricing so the two pages can never quote different currencies.
+  const currency = resolveDisplayCurrency(countryFromHeaders(await headers()), currenciesFor("pro"));
 
   return (
     <main>
@@ -829,7 +840,7 @@ export const config = { matcher: "/:path*" };`,
                   </tr>
                   <tr>
                     <td>Entry price</td>
-                    <td className="col-agentread">${PLANS.pro.priceMonthlyUsd}/mo</td>
+                    <td className="col-agentread">{formatMoney(priceFor("pro", currency) ?? PLANS.pro.priceMonthlyUsd, currency)}/mo</td>
                     <td>~$499/mo</td>
                     <td>~$139/mo</td>
                     <td>$16/mo</td>
@@ -992,7 +1003,7 @@ export const config = { matcher: "/:path*" };`,
                     {featured && <span className="price-flag">Most popular</span>}
                     <div className="price-name">{plan.name}</div>
                     <div className="price-amount">
-                      ${plan.priceMonthlyUsd}
+                      {formatMoney(priceFor(id, currency) ?? plan.priceMonthlyUsd, currency)}
                       <span className="per">/mo</span>
                     </div>
                     <p className="price-desc">{plan.blurb}</p>

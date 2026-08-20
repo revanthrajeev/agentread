@@ -4,7 +4,7 @@ import PricingTable from "@/components/billing/PricingTable";
 import { currenciesFor } from "@/lib/billing/registry";
 import {
   countryFromHeaders,
-  currencyForCountry,
+  resolveDisplayCurrency,
   DEFAULT_CURRENCY,
   type CurrencyCode,
 } from "@/lib/billing/currency";
@@ -22,9 +22,7 @@ export default async function PricingPage() {
   const sellable = currenciesFor("pro");
   const currencies: CurrencyCode[] = sellable.length > 0 ? sellable : [DEFAULT_CURRENCY];
 
-  const country = countryFromHeaders(await headers());
-  const suggested = currencyForCountry(country);
-  const initialCurrency = currencies.includes(suggested) ? suggested : currencies[0];
+  const initialCurrency = resolveDisplayCurrency(countryFromHeaders(await headers()), currencies);
 
   return (
     <main className="container section">

@@ -97,3 +97,21 @@ export function countryFromHeaders(headers: Headers): string | null {
     null
   );
 }
+
+/**
+ * The currency a visitor should see, resolved once from geo and from what can actually be
+ * charged. Both the landing page and /pricing call this so they can never disagree — they
+ * previously did: the landing page hardcoded USD while /pricing localised, so an Indian
+ * visitor saw $49 on one page and ₹1,999 one click later.
+ *
+ * `sellable` is what a configured gateway can genuinely charge. A currency nobody can be
+ * billed in is never shown, because a price that cannot be paid is a dead end, not a price.
+ */
+export function resolveDisplayCurrency(
+  country: string | null | undefined,
+  sellable: CurrencyCode[]
+): CurrencyCode {
+  const preferred = currencyForCountry(country);
+  if (sellable.length === 0) return preferred; // no gateway configured — show list prices
+  return sellable.includes(preferred) ? preferred : sellable[0];
+}

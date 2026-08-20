@@ -174,11 +174,11 @@ export default async function Home() {
         <div className="container hero-stats">
           <Reveal delay={1}>
             <div className="stat-tile glass">
-              <div className="stat-label">Pages scored</div>
+              <div className="stat-label">Websites scanned</div>
               <div className="stat-value">
-                <CountUp value={stats.totalReads} />
+                <CountUp value={stats.sitesScanned} />
               </div>
-              <div className="stat-sub">across audits, Serve + MCP</div>
+              <div className="stat-sub">distinct domains, all time</div>
             </div>
           </Reveal>
           <Reveal delay={2}>
@@ -193,11 +193,11 @@ export default async function Home() {
           </Reveal>
           <Reveal delay={3}>
             <div className="stat-tile glass">
-              <div className="stat-label">MCP tools live</div>
+              <div className="stat-label">Pages scored</div>
               <div className="stat-value">
-                <CountUp value={MCP_TOOLS.length} />
+                <CountUp value={stats.totalReads} />
               </div>
-              <div className="stat-sub">{MCP_TOOLS.join(" · ")}</div>
+              <div className="stat-sub">across scans, audits, Serve + MCP</div>
             </div>
           </Reveal>
           <Reveal delay={4}>

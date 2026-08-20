@@ -19,6 +19,19 @@ export const KNOWN_AI_CRAWLERS: Record<string, string> = {
   Bytespider: "ByteDance",
   "Applebot-Extended": "Apple (AI training)",
   Amazonbot: "Amazon",
+  GoogleOther: "Google (Gemini / non-Search fetching)",
+  "Google-Extended": "Google (Gemini training opt-out token)",
+  "Meta-ExternalAgent": "Meta (AI training)",
+  "Meta-ExternalFetcher": "Meta (live fetching)",
+  DuckAssistBot: "DuckDuckGo (DuckAssist)",
+  "cohere-ai": "Cohere",
+  "cohere-training-data-crawler": "Cohere (training crawler)",
+  YouBot: "You.com",
+  "Diffbot": "Diffbot (knowledge graph)",
+  "MistralAI-User": "Mistral (live browsing)",
+  Timpibot: "Timpi",
+  "AI2Bot": "Allen Institute for AI",
+  "Firecrawl-Agent": "Firecrawl (extraction)",
 };
 
 /** Returns the matched crawler's display name, or null if the UA doesn't match a known AI crawler. */

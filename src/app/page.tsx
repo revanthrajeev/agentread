@@ -829,7 +829,7 @@ export const config = { matcher: "/:path*" };`,
                   </tr>
                   <tr>
                     <td>Entry price</td>
-                    <td className="col-agentread">$29/mo</td>
+                    <td className="col-agentread">${PLANS.pro.priceMonthlyUsd}/mo</td>
                     <td>~$499/mo</td>
                     <td>~$139/mo</td>
                     <td>$16/mo</td>

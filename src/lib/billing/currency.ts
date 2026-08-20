@@ -34,9 +34,9 @@ export const CURRENCIES: Record<CurrencyCode, CurrencyMeta> = {
  */
 const PRICE_TABLE: Record<string, Record<CurrencyCode, number | null>> = {
   free: { USD: 0, INR: 0 },
-  pro: { USD: 29, INR: 1_499 },
-  scale: { USD: 99, INR: 4_999 },
-  autofix: { USD: 299, INR: 14_999 },
+  pro: { USD: 49, INR: 1_999 },
+  scale: { USD: 149, INR: 5_999 },
+  autofix: { USD: 399, INR: 19_999 },
   enterprise: { USD: null, INR: null },
 };
 
@@ -66,7 +66,7 @@ export function toUsd(amountMinor: number, currency: CurrencyCode): number {
   return Math.round(major * USD_PER_MAJOR[currency] * 100) / 100;
 }
 
-/** `$29` / `₹1,499` — grouped the way each locale expects (INR uses the lakh grouping). */
+/** `$49` / `₹1,999` — grouped the way each locale expects (INR uses the lakh grouping). */
 export function formatMoney(amountMajor: number, currency: CurrencyCode): string {
   const locale = currency === "INR" ? "en-IN" : "en-US";
   return new Intl.NumberFormat(locale, {

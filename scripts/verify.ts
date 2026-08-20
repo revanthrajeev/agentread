@@ -127,11 +127,11 @@ async function main() {
   // that keep three gateways from becoming three ways to grant a plan wrongly.
   // --------------------------------------------------------------------
   section("Billing — currency");
-  ok("USD pro price is $29", priceFor("pro", "USD") === 29);
-  ok("INR pro price is set, not converted", priceFor("pro", "INR") === 1499);
+  ok("USD pro price is $49", priceFor("pro", "USD") === 49);
+  ok("INR pro price is set, not converted", priceFor("pro", "INR") === 1999);
   ok("enterprise is not sold at a list price", priceFor("enterprise", "USD") === null);
-  ok("minor units for USD are cents", priceMinorFor("pro", "USD") === 2900);
-  ok("minor units for INR are paise", priceMinorFor("pro", "INR") === 149900);
+  ok("minor units for USD are cents", priceMinorFor("pro", "USD") === 4900);
+  ok("minor units for INR are paise", priceMinorFor("pro", "INR") === 199900);
   ok("USD normalises to itself", toUsd(2900, "USD") === 29);
   ok("INR normalises to a smaller USD figure", toUsd(149900, "INR") < 29, `${toUsd(149900, "INR")}`);
   ok("USD formats with a dollar sign", formatMoney(29, "USD").includes("29"));

@@ -1184,7 +1184,7 @@ export const config = { matcher: "/:path*" };`,
               <div className="footer-links">
                 <Link href="/#validation">Why now</Link>
                 <Link href="/#pricing">Pricing</Link>
-                <Link href="/#faq">FAQ</Link>
+                <Link href="/faq">FAQ</Link>
                 <Link href="/docs">Docs</Link>
               </div>
             </div>

@@ -16,17 +16,21 @@ const EMPTY_STATS: PublicStats = { totalReads: 0, sitesScanned: 0, avgReadScore:
  * neutral absence into published evidence that nobody uses the product. Once real traffic
  * crosses the threshold the strip appears on its own, with no deploy.
  *
+ * Set to 5 rather than 25: with real scans landing, a small honest number that climbs beats
+ * an empty space, and the strip carries steadier figures alongside it (average ReadScore, and
+ * the count of AI crawlers recognised) that read well even while the scan count is young.
+ *
  * Override with the MIN_DISPLAY_STATS env var; 0 forces the strip to always show.
  */
 export const MIN_DISPLAY_STATS: number = resolveThreshold();
 
 function resolveThreshold(): number {
   const raw = process.env.MIN_DISPLAY_STATS;
-  if (raw === undefined || raw.trim() === "") return 25;
+  if (raw === undefined || raw.trim() === "") return 5;
   const parsed = Number.parseInt(raw, 10);
   // A malformed value falls back to the default rather than accidentally publishing zeros,
   // but an explicit 0 is honoured.
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 25;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 5;
 }
 
 /** Whether there is enough real usage for the public stats strip to be worth showing. */

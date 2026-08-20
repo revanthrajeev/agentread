@@ -24,9 +24,9 @@ export async function GET() {
 
   const body = `# AgentRead
 
-> AgentRead makes websites readable to AI agents. It scores any URL 0-100 (ReadScore) for
-> agent readability, explains exactly which markup causes the problem, and serves clean
-> Markdown to AI crawlers so agents read your content instead of hallucinating around it.
+> AgentRead is an AI search visibility tool. It scores any URL 0-100 (ReadScore) for how much
+> of the page an AI assistant can actually read, explains exactly which markup causes the
+> problem, and ships the fix as a pull request you review before merging.
 
 AgentRead is built for site owners whose pages are invisible or misread by ChatGPT, Claude,
 Perplexity and other AI agents — typically because prices, buttons and copy are rendered
@@ -45,6 +45,11 @@ client-side and never appear in the raw HTML a crawler receives.
   a real crawl of your site.
 - [MCP server](${base}/docs#mcp): a remote Model Context Protocol server exposing read_url,
   score_url, audit_site and generate_llms_txt to any MCP-compatible client.
+- [Autofix](${base}/#features): turns audit findings into a single reviewable GitHub pull
+  request. Never pushes to the default branch, never auto-merges. Most fixes are generated
+  deterministically and cost nothing; fixes needing a model to read source consume one credit.
+- [Site audit](${base}/#layers): crawls up to 1,000 pages following llms.txt, then sitemap,
+  then on-page links, and returns a per-page ReadScore with every deduction named.
 
 ## Key concepts
 
@@ -54,12 +59,15 @@ client-side and never appear in the raw HTML a crawler receives.
 - [Hallucination risk](${base}/docs#risk): derived from how much real content survives
   extraction. A page whose price exists only in client-rendered JavaScript is where agents
   invent answers.
-- [The render tax](${base}/#problem): a typical product page ships ~812 KB of HTML to deliver
-  ~8 KB of content. Agents pay for every token of the difference.
+- [Why pages go missing](${base}/#problem): a typical product page ships ~812 KB of HTML to
+  deliver ~8 KB of words. When the price and call to action render client-side, an AI crawler
+  receives markup containing neither, so the assistant answers from somewhere else.
 
 ## Docs
 
 - [Documentation](${base}/docs)
+- [FAQ](${base}/faq): what a ReadScore measures, how AgentRead differs from AI-visibility
+  monitoring and SEO tools, what Autofix changes, plans, and data handling.
 - [Pricing](${base}/pricing)
 - [Playground](${base}/playground)
 

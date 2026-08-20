@@ -53,7 +53,7 @@ export const PLANS: Record<PlanId, Plan> = {
   pro: {
     id: "pro",
     name: "Pro",
-    priceMonthlyUsd: 29,
+    priceMonthlyUsd: 49,
     blurb: "Audit the whole site, generate llms.txt, and watch for regressions.",
     limits: { reads: 5_000, audits: 50, pagesPerAudit: 100, watches: 5, readsPerMinute: 60, autofixCredits: 0 },
     features: [
@@ -68,7 +68,7 @@ export const PLANS: Record<PlanId, Plan> = {
   scale: {
     id: "scale",
     name: "Scale",
-    priceMonthlyUsd: 99,
+    priceMonthlyUsd: 149,
     blurb: "Large sites, webhook alerting, and headroom for agent traffic.",
     limits: { reads: 50_000, audits: 500, pagesPerAudit: 500, watches: 50, readsPerMinute: 240, autofixCredits: 10 },
     features: [
@@ -83,7 +83,7 @@ export const PLANS: Record<PlanId, Plan> = {
   autofix: {
     id: "autofix",
     name: "Autofix",
-    priceMonthlyUsd: 299,
+    priceMonthlyUsd: 399,
     blurb: "We don't just find what's broken — we open the pull request that fixes it.",
     limits: {
       reads: 100_000,

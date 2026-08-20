@@ -5,6 +5,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     "",
     "/pricing",
+    "/faq",
     "/docs",
     "/playground",
     "/tools/llms-txt-generator",
@@ -17,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${base}${route}`,
     lastModified: new Date(),
     changeFrequency: route === "" ? "weekly" : "monthly",
-    priority: route === "" ? 1 : route === "/pricing" || route.startsWith("/tools/") ? 0.8 : 0.6,
+    priority:
+      route === "" ? 1 : route === "/pricing" || route === "/faq" || route.startsWith("/tools/") ? 0.8 : 0.6,
   }));
 }

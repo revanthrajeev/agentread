@@ -183,7 +183,7 @@ export default function FaqPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageJsonLd()) }}
       />
 
-      <div className="section-head">
+      <div className="section-head" style={{ maxWidth: 760, marginInline: "auto" }}>
         <div className="eyebrow">FAQ</div>
         <h1 className="title">Questions, answered properly</h1>
         <p className="lead">
@@ -195,7 +195,12 @@ export default function FaqPage() {
 
       {SECTIONS.map((section) => (
         <section key={section.heading} className="section-tight">
-          <h2 className="title" style={{ fontSize: 24, marginBottom: 18 }}>
+          {/* .faq is max-width 760 + margin-inline auto, so the heading has to sit in the same
+              column or it drifts to the far left of a 1180px container. */}
+          <h2
+            className="title"
+            style={{ fontSize: 24, marginBottom: 18, maxWidth: 760, marginInline: "auto" }}
+          >
             {section.heading}
           </h2>
           <div className="faq">
@@ -226,7 +231,7 @@ export default function FaqPage() {
       ))}
 
       <section className="section-tight">
-        <div className="glass" style={{ padding: 28, borderRadius: "var(--r-lg)", textAlign: "center" }}>
+        <div className="glass" style={{ padding: 28, borderRadius: "var(--r-lg)", textAlign: "center", maxWidth: 760, marginInline: "auto" }}>
           <h2 className="title" style={{ fontSize: 22 }}>
             Still unsure? Scan a page.
           </h2>

@@ -89,7 +89,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteCanvas />
         <PointerEffects />
         <Nav />
-        <div className="flex-1">{children}</div>
+        {/* overflow-x: clip contains .reveal-l/.reveal-r, which park at translateX(±30px)
+            until scrolled into view and otherwise push the page 6px sideways. Clipping here
+            rather than on <body> keeps the fixed nav — a sibling, not a child — unaffected,
+            and `clip` (unlike `hidden`) creates no scroll container, so sticky still works. */}
+        <div className="flex-1" style={{ overflowX: "clip" }}>
+          {children}
+        </div>
       </body>
     </html>
   );

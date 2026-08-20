@@ -350,7 +350,7 @@ body {
 .hero-figure .cap { color: var(--muted); font-size: 15px; margin-top: 10px; }
 
 /* ---------- layers ---------- */
-.layers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.layers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
 .layer-card { padding: 30px 28px; border-radius: var(--r-lg); display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
 .layer-top { display: flex; align-items: center; justify-content: space-between; }
 .layer-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent-strong); font-weight: 600; letter-spacing: 0.1em; }
@@ -365,7 +365,7 @@ body {
 .layer-for b { color: var(--text-2); font-weight: 600; }
 
 /* ---------- mcp tools ---------- */
-.mcp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+.mcp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
 .tool-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
 .tool-chip {
   font-family: var(--font-mono); font-size: 13px; padding: 9px 15px; border-radius: 10px;
@@ -632,7 +632,7 @@ body {
 /* ============================================================
    DOCS
    ============================================================ */
-.docs-layout { display: grid; grid-template-columns: 250px 1fr; gap: 48px; padding-top: calc(var(--nav-h) + 40px); align-items: start; }
+.docs-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 48px; padding-top: calc(var(--nav-h) + 40px); align-items: start; }
 .docs-side { position: sticky; top: calc(var(--nav-h) + 40px); max-height: calc(100vh - var(--nav-h) - 80px); overflow-y: auto; padding-bottom: 20px; }
 .docs-main { min-width: 0; padding-bottom: 100px; }
 .doc-section { margin-bottom: 64px; scroll-margin-top: calc(var(--nav-h) + 24px); }
@@ -669,24 +669,34 @@ pre.doc-code { background: color-mix(in srgb, var(--viz-surface) 90%, transparen
 
 /* ---------- responsive ---------- */
 @media (max-width: 1024px) {
-  .hero-grid, .mcp-grid, .scan-inner { grid-template-columns: 1fr; }
+  /* minmax(0,1fr), not 1fr: a bare `1fr` track has an implicit min of min-content, so one
+     long unbreakable line inside a code block widens the track past the viewport and the
+     whole page scrolls sideways. Measured at 390px before this: 525px of scrollWidth. */
+  .hero-grid, .mcp-grid, .scan-inner { grid-template-columns: minmax(0, 1fr); }
   .hero-stats, .kpis, .pg-kvs { grid-template-columns: repeat(2, 1fr); }
-  .layers { grid-template-columns: 1fr; }
+  .layers { grid-template-columns: minmax(0, 1fr); }
   .bento-card, .bento-wide { grid-column: span 3; }
   .valid-grid, .pricing-grid { grid-template-columns: repeat(2, 1fr); }
   .chart-grid-2 { grid-template-columns: 1fr; }
-  .docs-layout { grid-template-columns: 1fr; }
+  .docs-layout { grid-template-columns: minmax(0, 1fr); }
   .docs-side { position: static; max-height: none; }
   .dash-layout { grid-template-columns: 1fr; }
   .dash-side { display: none; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
-  .tax-grid, .scorecard, .split { grid-template-columns: 1fr; }
+  .tax-grid, .scorecard, .split { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  /* Six nav links plus the right-hand cluster stopped fitting once FAQ was added. Tighten
+     first, then drop the accent picker, before hiding the links entirely below. */
+  .nav-inner { gap: 16px; }
+  .nav-links { gap: 0; }
+  .accent-pop { display: none; }
 }
 @media (max-width: 640px) {
   .nav-links { display: none; }
   .section { padding: 72px 0; }
   .hero { padding-top: calc(var(--nav-h) + 48px); }
-  .hero-stats, .kpis, .valid-grid, .pricing-grid, .pg-kvs { grid-template-columns: 1fr; }
+  .hero-stats, .kpis, .valid-grid, .pricing-grid, .pg-kvs { grid-template-columns: minmax(0, 1fr); }
   .bento-card, .bento-wide { grid-column: span 6; }
   .scan-band { padding: 36px 26px; }
   .email-form, .scan-form { flex-direction: column; }

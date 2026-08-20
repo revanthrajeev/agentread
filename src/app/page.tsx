@@ -981,13 +981,15 @@ export const config = { matcher: "/:path*" };`,
           <div className="pricing-grid">
             {LANDING_PLANS.map((id, i) => {
               const plan = PLANS[id];
-              const featured = id === "scale";
+              // Must match PricingTable on /pricing, which flags Pro — two pages recommending
+              // different tiers reads as a mistake to anyone who visits both.
+              const featured = id === "pro";
               // LANDING_PLANS is four entries, so the stagger index is always within Reveal's 1–6 range.
               const delay = (i + 1) as 1 | 2 | 3 | 4;
               return (
                 <Reveal key={id} delay={delay}>
                   <div className={featured ? "price-card glass price-featured" : "price-card glass glass-hover"}>
-                    {featured && <span className="price-flag">Most teams start here</span>}
+                    {featured && <span className="price-flag">Most popular</span>}
                     <div className="price-name">{plan.name}</div>
                     <div className="price-amount">
                       ${plan.priceMonthlyUsd}

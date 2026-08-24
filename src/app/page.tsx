@@ -246,8 +246,8 @@ export default async function Home() {
           <Reveal>
             <div className="glass" style={{ padding: 8, borderRadius: "var(--r-lg)", overflow: "hidden" }}>
               <Image
-                src="/og.png"
-                alt="Illustrative preview of the AgentRead dashboard style — glass panels, ReadScore gauge, trend chart"
+                src="/dashboard-mockup.jpg"
+                alt="Illustrative mockup of an AgentRead audit result — ReadScore gauge, findings list, token-reduction chart"
                 width={1376}
                 height={768}
                 style={{ width: "100%", height: "auto", borderRadius: 12, display: "block" }}
@@ -255,7 +255,7 @@ export default async function Home() {
               />
             </div>
             <p style={{ textAlign: "center", marginTop: 12, fontSize: 13, color: "var(--muted)" }}>
-              Illustrative preview — see it running for real in the{" "}
+              Illustrative mockup, not a live customer&apos;s data — run a real one yourself in the{" "}
               <Link href="/playground" style={{ textDecoration: "underline" }}>
                 Playground
               </Link>

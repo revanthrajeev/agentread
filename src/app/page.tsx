@@ -7,6 +7,18 @@ import Marquee from "@/components/site/Marquee";
 import CodeTabs from "@/components/site/CodeTabs";
 import FloatingHeroStats from "@/components/site/FloatingHeroStats";
 import CrawlerNetworkDiagram from "@/components/site/CrawlerNetworkDiagram";
+import {
+  IconAudit,
+  IconAutofix,
+  IconLlmsTxt,
+  IconAnalytics,
+  IconServe,
+  IconWatch,
+  IconReport,
+  IconMcp,
+  IconMention,
+  IconCrawl,
+} from "@/components/site/BentoIcons";
 import { getPublicStats, shouldShowPublicStats } from "@/lib/stats";
 import { KNOWN_AI_CRAWLERS } from "@/lib/serve/crawlers";
 import { headers } from "next/headers";
@@ -597,6 +609,7 @@ export const config = { matcher: "/:path*" };`,
 
           <div className="bento">
             <Reveal className="bento-card bento-wide glass glass-hover card-glow">
+              <span className="bento-icon"><IconAudit /></span>
               <h3>
                 Site audit <span className="tag tag-live">Live</span>
               </h3>
@@ -607,6 +620,7 @@ export const config = { matcher: "/:path*" };`,
               <span className="bento-foot">128 pages · 73 failing</span>
             </Reveal>
             <Reveal delay={1} className="bento-card bento-wide glass glass-hover card-glow">
+              <span className="bento-icon"><IconAutofix /></span>
               <h3>
                 Autofix pull requests <span className="tag tag-live">Live</span>
               </h3>
@@ -619,6 +633,7 @@ export const config = { matcher: "/:path*" };`,
             </Reveal>
 
             <Reveal className="bento-card glass glass-hover card-glow">
+              <span className="bento-icon"><IconLlmsTxt /></span>
               <h3>
                 llms.txt generator <span className="tag tag-live">Live</span>
               </h3>
@@ -628,6 +643,7 @@ export const config = { matcher: "/:path*" };`,
               </p>
             </Reveal>
             <Reveal delay={1} className="bento-card glass glass-hover card-glow">
+              <span className="bento-icon"><IconAnalytics /></span>
               <h3>
                 Agent-traffic analytics <span className="tag tag-live">Live</span>
               </h3>
@@ -637,6 +653,7 @@ export const config = { matcher: "/:path*" };`,
               </p>
             </Reveal>
             <Reveal delay={2} className="bento-card glass glass-hover card-glow">
+              <span className="bento-icon"><IconServe /></span>
               <h3>
                 Serve middleware <span className="tag tag-live">Live</span>
               </h3>
@@ -647,6 +664,7 @@ export const config = { matcher: "/:path*" };`,
             </Reveal>
 
             <Reveal className="bento-card bento-wide glass glass-hover card-glow">
+              <span className="bento-icon"><IconWatch /></span>
               <h3>
                 Regression monitoring <span className="tag tag-live">Live</span>
               </h3>
@@ -657,6 +675,7 @@ export const config = { matcher: "/:path*" };`,
               <span className="bento-foot">alerts on drops only</span>
             </Reveal>
             <Reveal delay={1} className="bento-card bento-wide glass glass-hover card-glow">
+              <span className="bento-icon"><IconReport /></span>
               <h3>
                 Public audit reports <span className="tag tag-live">Live</span>
               </h3>
@@ -668,6 +687,7 @@ export const config = { matcher: "/:path*" };`,
             </Reveal>
 
             <Reveal className="bento-card glass glass-hover card-glow">
+              <span className="bento-icon"><IconMcp /></span>
               <h3>
                 MCP server <span className="tag tag-live">Live</span>
               </h3>
@@ -677,6 +697,7 @@ export const config = { matcher: "/:path*" };`,
               </p>
             </Reveal>
             <Reveal delay={1} className="bento-card glass glass-hover card-glow">
+              <span className="bento-icon"><IconMention /></span>
               <h3>
                 Brand-mention tracking <span className="tag tag-soon">Roadmap</span>
               </h3>
@@ -686,6 +707,7 @@ export const config = { matcher: "/:path*" };`,
               </p>
             </Reveal>
             <Reveal delay={2} className="bento-card glass glass-hover card-glow">
+              <span className="bento-icon"><IconCrawl /></span>
               <h3>
                 Pay-per-crawl <span className="tag tag-soon">Roadmap</span>
               </h3>

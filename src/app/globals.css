@@ -73,13 +73,6 @@
   --viz-track: rgba(74, 58, 167, 0.14);
 }
 
-:root[data-accent="cyan"] { --accent: #14b8d4; --accent-b: #7c5cff; --accent-strong: #4dd7ee; --accent-soft: rgba(20, 184, 212, 0.14); --accent-glow: rgba(20, 184, 212, 0.36); }
-:root[data-theme="light"][data-accent="cyan"] { --accent: #0e7c96; --accent-strong: #0a6478; --accent-soft: rgba(14, 124, 150, 0.1); --accent-glow: rgba(14, 124, 150, 0.24); }
-:root[data-accent="emerald"] { --accent: #2fbf8f; --accent-b: #22d3ee; --accent-strong: #57dcae; --accent-soft: rgba(47, 191, 143, 0.14); --accent-glow: rgba(47, 191, 143, 0.34); }
-:root[data-theme="light"][data-accent="emerald"] { --accent: #0c7a56; --accent-strong: #096344; --accent-soft: rgba(12, 122, 86, 0.1); --accent-glow: rgba(12, 122, 86, 0.22); }
-:root[data-accent="amber"] { --accent: #e8a13d; --accent-b: #fb7185; --accent-strong: #f5bc63; --accent-soft: rgba(232, 161, 61, 0.14); --accent-glow: rgba(232, 161, 61, 0.34); }
-:root[data-theme="light"][data-accent="amber"] { --accent: #a15c0a; --accent-strong: #7f4a08; --accent-soft: rgba(161, 92, 10, 0.1); --accent-glow: rgba(161, 92, 10, 0.22); }
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -171,21 +164,6 @@ body {
 :root[data-theme="light"] .theme-icon-sun { display: block; }
 :root[data-theme="light"] .theme-icon-moon { display: none; }
 
-.accent-pop { position: relative; }
-.accent-menu {
-  position: absolute; top: calc(100% + 10px); right: 0; display: none; gap: 8px; padding: 10px;
-  background: color-mix(in srgb, var(--bg-2) 80%, transparent);
-  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
-  border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm);
-}
-.accent-pop.open .accent-menu { display: flex; }
-.swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; }
-.swatch:hover { transform: scale(1.12); }
-.swatch.active { border-color: var(--text); }
-.sw-violet { background: linear-gradient(135deg, #7c5cff, #22d3ee); }
-.sw-cyan { background: linear-gradient(135deg, #14b8d4, #7c5cff); }
-.sw-emerald { background: linear-gradient(135deg, #2fbf8f, #22d3ee); }
-.sw-amber { background: linear-gradient(135deg, #e8a13d, #fb7185); }
 
 /* ---------- buttons ---------- */
 .btn {
@@ -291,10 +269,14 @@ body {
 
 /* ---------- floating hero stat cards ---------- */
 .hero-visual-wrap { position: relative; }
+/* Positioned fully outside the terminal panel's own box, not overlapping it — the
+   terminal has its own transform (.tilt) and backdrop-filter, both of which create a
+   stacking/paint context that made small overlapping offsets clip unpredictably. */
 .float-stat { position: absolute; z-index: 3; pointer-events: none; }
-.float-stat-a { top: -18px; left: -22px; }
-.float-stat-b { bottom: 64px; right: -26px; }
-.float-stat-c { bottom: -20px; left: 30px; }
+.float-stat-a { top: -56px; left: 24px; }
+.float-stat-b { top: 50%; right: -128px; transform: translateY(-50%); }
+.float-stat-c { bottom: -56px; right: 60px; }
+@media (max-width: 1180px) { .float-stat-b { display: none; } }
 .float-card { padding: 12px 16px; border-radius: var(--r-md); min-width: 108px; }
 .float-label { font-size: 10.5px; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; white-space: nowrap; }
 .float-value { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: -0.01em; margin-top: 2px; color: var(--accent-strong, var(--accent)); }
@@ -713,10 +695,9 @@ pre.doc-code { background: color-mix(in srgb, var(--viz-surface) 90%, transparen
 }
 @media (max-width: 900px) {
   /* Six nav links plus the right-hand cluster stopped fitting once FAQ was added. Tighten
-     first, then drop the accent picker, before hiding the links entirely below. */
+     before hiding the links entirely below. */
   .nav-inner { gap: 16px; }
   .nav-links { gap: 0; }
-  .accent-pop { display: none; }
 }
 @media (max-width: 640px) {
   .nav-links { display: none; }

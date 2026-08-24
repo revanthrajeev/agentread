@@ -1225,6 +1225,9 @@ export const config = { matcher: "/:path*" };`,
             </span>
           </div>
         </div>
+        <div className="footer-wordmark-band" aria-hidden="true">
+          <span className="footer-wordmark">agentread</span>
+        </div>
       </footer>
     </main>
   );

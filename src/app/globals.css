@@ -216,7 +216,7 @@ body {
 .eyebrow::before { content: ""; width: 26px; height: 1.5px; background: var(--accent); }
 .eyebrow.center { justify-content: center; }
 .eyebrow.center::after { content: ""; width: 26px; height: 1.5px; background: var(--accent); }
-.title { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.12; }
+.title { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.035em; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.1; }
 .lead { color: var(--text-2); font-size: 17.5px; max-width: 640px; margin-top: 16px; }
 .section-head { margin-bottom: 56px; }
 .section-head.center { text-align: center; }
@@ -525,6 +525,17 @@ body {
 .footer-links a:hover { color: var(--text); }
 .footer-desc { color: var(--muted); font-size: 14px; margin-top: 14px; max-width: 300px; }
 .footer-bottom { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+
+.footer-wordmark-band { overflow: hidden; text-align: center; padding: 18px 0 6px; user-select: none; }
+.footer-wordmark {
+  display: inline-block;
+  font-family: var(--font-display); font-weight: 800; letter-spacing: -0.05em;
+  font-size: clamp(64px, 14vw, 180px); line-height: 1;
+  color: var(--accent-strong, var(--accent));
+  text-shadow: 0 0 12px var(--accent-glow, rgba(124, 92, 255, 0.55)), 0 0 60px var(--accent-glow, rgba(124, 92, 255, 0.35));
+  opacity: 0.92;
+}
+:root[data-theme="light"] .footer-wordmark { opacity: 0.75; }
 
 /* ---------- toast ---------- */
 .toast {

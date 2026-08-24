@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/docs",
     "/playground",
     "/tools/llms-txt-generator",
+    "/compare/ai-visibility-tools",
     "/login",
     "/privacy",
     "/terms",
@@ -19,6 +20,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: route === "" ? "weekly" : "monthly",
     priority:
-      route === "" ? 1 : route === "/pricing" || route === "/faq" || route.startsWith("/tools/") ? 0.8 : 0.6,
+      route === "" ? 1
+      : route === "/pricing" || route === "/faq" || route.startsWith("/tools/") || route.startsWith("/compare/") ? 0.8
+      : 0.6,
   }));
 }

@@ -5,6 +5,8 @@ import Reveal from "@/components/site/Reveal";
 import CountUp from "@/components/site/CountUp";
 import Marquee from "@/components/site/Marquee";
 import CodeTabs from "@/components/site/CodeTabs";
+import FloatingHeroStats from "@/components/site/FloatingHeroStats";
+import CrawlerNetworkDiagram from "@/components/site/CrawlerNetworkDiagram";
 import { getPublicStats, shouldShowPublicStats } from "@/lib/stats";
 import { KNOWN_AI_CRAWLERS } from "@/lib/serve/crawlers";
 import { headers } from "next/headers";
@@ -125,7 +127,14 @@ export default async function Home() {
             </Reveal>
           </div>
 
-          <Reveal variant="right" delay={2}>
+          <Reveal variant="right" delay={2} className="hero-visual-wrap">
+            {showStats && (
+              <FloatingHeroStats
+                totalReads={stats.totalReads}
+                avgReadScore={stats.avgReadScore}
+                sitesScanned={stats.sitesScanned}
+              />
+            )}
             <div className="terminal tilt">
               <div className="term-bar">
                 <span className="term-dot r" />
@@ -225,6 +234,12 @@ export default async function Home() {
       </header>
 
       <Marquee label="Speaks standard MCP — drops into any compatible client" items={MCP_CLIENTS} />
+
+      <section className="section-tight">
+        <div className="container">
+          <CrawlerNetworkDiagram />
+        </div>
+      </section>
       {/* ======================= PRODUCT VISUAL ======================= */}
       <section className="section-tight">
         <div className="container">

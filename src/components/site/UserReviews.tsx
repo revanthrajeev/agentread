@@ -78,17 +78,6 @@ export const USER_REVIEWS: UserReview[] = [
     role: "Growth Engineer",
     avatarGradient: "from-sky-500 to-blue-600",
   },
-  {
-    name: "Matteo Rossi",
-    country: "Italy",
-    countryCode: "IT",
-    flag: "🇮🇹",
-    rating: 5,
-    review:
-      "AgentRead feels like a tool built for where web discovery is heading. It makes AI visibility measurable instead of leaving it as something you just hope is working.",
-    role: "Site Architect",
-    avatarGradient: "from-violet-500 to-fuchsia-500",
-  },
 ];
 
 function StarRating({ rating }: { rating: number }) {
@@ -141,7 +130,7 @@ export default function UserReviews({ compact = false, limit }: UserReviewsProps
         <div className="summary-divider" />
         <div className="summary-stat-chip">
           <span className="summary-globe-icon">🌍</span>
-          <span className="summary-label">Builders across 7 countries</span>
+          <span className="summary-label">Builders across 6 countries</span>
         </div>
         <div className="summary-divider" />
         <div className="summary-stat-chip">

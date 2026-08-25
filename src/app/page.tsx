@@ -1391,6 +1391,7 @@ export const config = { matcher: "/:path*" };`,
                 <Link href="/#pricing">Pricing</Link>
                 <Link href="/faq">FAQ</Link>
                 <Link href="/docs">Docs</Link>
+                <Link href="/blog">Blog</Link>
               </div>
             </div>
           </div>

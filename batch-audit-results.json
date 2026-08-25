@@ -1,0 +1,95 @@
+{
+  "summary": {
+    "totalScanned": 10,
+    "successfullyCrawled": 8,
+    "avgReadScore": 75,
+    "pctMissingLlmsTxt": 50,
+    "pctEmptyShell": 25,
+    "pctJsOnlyContent": 0,
+    "pctDisabledCta": 13
+  },
+  "results": [
+    {
+      "url": "https://stripe.com",
+      "ok": true,
+      "readScore": 82,
+      "hasLlmsTxt": true,
+      "hasEmptyShell": false,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": false
+    },
+    {
+      "url": "https://airbnb.com",
+      "ok": true,
+      "readScore": 60,
+      "hasLlmsTxt": false,
+      "hasEmptyShell": false,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": true
+    },
+    {
+      "url": "https://dropbox.com",
+      "ok": true,
+      "readScore": 82,
+      "hasLlmsTxt": true,
+      "hasEmptyShell": false,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": false
+    },
+    {
+      "url": "https://reddit.com",
+      "ok": true,
+      "readScore": 75,
+      "hasLlmsTxt": true,
+      "hasEmptyShell": true,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": false
+    },
+    {
+      "url": "https://coinbase.com",
+      "ok": false,
+      "error": "Upstream responded 403"
+    },
+    {
+      "url": "https://instacart.com",
+      "ok": true,
+      "readScore": 75,
+      "hasLlmsTxt": false,
+      "hasEmptyShell": false,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": false
+    },
+    {
+      "url": "https://gitlab.com",
+      "ok": true,
+      "readScore": 85,
+      "hasLlmsTxt": false,
+      "hasEmptyShell": false,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": false
+    },
+    {
+      "url": "https://zapier.com",
+      "ok": true,
+      "readScore": 82,
+      "hasLlmsTxt": true,
+      "hasEmptyShell": false,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": false
+    },
+    {
+      "url": "https://doordash.com",
+      "ok": false,
+      "error": "Upstream responded 403"
+    },
+    {
+      "url": "https://twitch.tv",
+      "ok": true,
+      "readScore": 58,
+      "hasLlmsTxt": false,
+      "hasEmptyShell": true,
+      "hasJsOnlyContent": false,
+      "hasDisabledCta": false
+    }
+  ]
+}

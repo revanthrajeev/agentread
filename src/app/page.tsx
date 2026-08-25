@@ -9,6 +9,7 @@ import CodeTabs from "@/components/site/CodeTabs";
 import CrawlerNetworkDiagram from "@/components/site/CrawlerNetworkDiagram";
 import OrchestrationDiagram from "@/components/site/OrchestrationDiagram";
 import EraDiagram from "@/components/site/EraDiagram";
+import UserReviews from "@/components/site/UserReviews";
 import {
   IconAudit,
   IconAutofix,
@@ -1137,6 +1138,25 @@ export const config = { matcher: "/:path*" };`,
         </div>
       </section>
 
+            {/* ======================= USER REVIEWS ======================= */}
+      <section className="section" id="reviews">
+        <div className="container">
+          <Reveal>
+            <div className="section-head center">
+              <p className="eyebrow center">User Reviews</p>
+              <h2 className="title">
+                Trusted by builders <span className="grad-text">worldwide.</span>
+              </h2>
+              <p className="lead">
+                See what developers, founders, and technical leads are saying about auditing and improving
+                their site&apos;s AI readability with AgentRead.
+              </p>
+            </div>
+          </Reveal>
+          <UserReviews />
+        </div>
+      </section>
+
       {/* ======================= PRICING ======================= */}
       <section className="section" id="pricing">
         <div className="container">
@@ -1367,6 +1387,7 @@ export const config = { matcher: "/:path*" };`,
               <h4>Company</h4>
               <div className="footer-links">
                 <Link href="/#validation">Why now</Link>
+                <Link href="/#reviews">Reviews</Link>
                 <Link href="/#pricing">Pricing</Link>
                 <Link href="/faq">FAQ</Link>
                 <Link href="/docs">Docs</Link>

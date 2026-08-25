@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import PricingTable from "@/components/billing/PricingTable";
+import UserReviews from "@/components/site/UserReviews";
 import { currenciesFor } from "@/lib/billing/registry";
 import {
   countryFromHeaders,
@@ -36,6 +37,19 @@ export default async function PricingPage() {
       </div>
 
       <PricingTable currencies={currencies} initialCurrency={initialCurrency} />
+
+      <section className="section-tight">
+        <div className="section-head">
+          <div className="eyebrow">Reviews</div>
+          <h2 className="title" style={{ fontSize: 28 }}>
+            What builders are saying
+          </h2>
+          <p className="lead">
+            Real feedback from engineering teams and founders auditing and automating their AI visibility.
+          </p>
+        </div>
+        <UserReviews />
+      </section>
 
       <section className="section-tight">
         <h2 className="title" style={{ fontSize: 24 }}>

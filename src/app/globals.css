@@ -463,7 +463,6 @@ body {
   color: var(--muted); margin-bottom: 16px; font-weight: 600;
 }
 .marquee { display: flex; gap: 10px; width: max-content; animation: scroll 32s linear infinite; }
-.marquee:hover { animation-play-state: paused; }
 /* Reference chip: class="flex items-center gap-2 rounded-md border border-border/35
    bg-background px-3 py-2" — rounded-md=6px, gap-2=8px, px-3/py-2=12px/8px. */
 .marquee-item {
@@ -475,7 +474,7 @@ body {
 }
 .marquee-item:hover { background: var(--bg-3); color: var(--text); }
 :root[data-theme="dark"] .marquee-item { background: var(--glass); }
-@keyframes scroll { to { transform: translateX(-50%); } }
+@keyframes scroll { to { transform: translateX(var(--marquee-shift, -50%)); } }
 
 /* ── AI ENGINES BAR (dark strip, geoly-style) ────────────── */
 .engines-bar {
@@ -499,7 +498,6 @@ body {
   display: flex; gap: 12px; width: max-content; flex-wrap: nowrap;
   animation: scroll 26s linear infinite;
 }
-.engines-bar-track:hover .engines-bar-pills { animation-play-state: paused; }
 .engine-pill {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 16px; border-radius: var(--r-sm);

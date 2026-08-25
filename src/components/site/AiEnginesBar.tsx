@@ -9,7 +9,9 @@ const ENGINES = [
 ];
 
 export default function AiEnginesBar() {
-  const doubled = [...ENGINES, ...ENGINES];
+  // Quadrupled, not doubled — a container wider than one copy's width would otherwise
+  // show a blank gap right before the loop wraps. See Marquee.tsx for the same fix.
+  const quadrupled = [...ENGINES, ...ENGINES, ...ENGINES, ...ENGINES];
   return (
     <section className="engines-bar">
       <div className="container engines-bar-inner">
@@ -21,8 +23,12 @@ export default function AiEnginesBar() {
           </p>
         </div>
         <div className="engines-bar-track">
-          <div className="engines-bar-pills" aria-hidden="true">
-            {doubled.map((e, i) => (
+          <div
+            className="engines-bar-pills"
+            aria-hidden="true"
+            style={{ "--marquee-shift": "-25%" } as React.CSSProperties}
+          >
+            {quadrupled.map((e, i) => (
               <span className="engine-pill" key={`${e.name}-${i}`}>
                 <span className="engine-pill-icon">{e.icon}</span>
                 {e.name}

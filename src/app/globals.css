@@ -619,6 +619,7 @@ body {
   box-shadow: var(--shadow-card);
 }
 .bento-shot-sm { max-width: 190px; margin-inline: auto; }
+.bento-media-roadmap .bento-shot { opacity: 0.55; filter: grayscale(0.3); }
 
 /* ── COMPARISON TABLE ────────────────────────────────────── */
 .table-wrap  { overflow-x: auto; border-radius: var(--r-lg); border: 1px solid var(--border); }

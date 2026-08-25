@@ -54,10 +54,12 @@ export default function EraDiagram() {
                 <stop offset="1" stopColor="#ec4899" stopOpacity="0.1" />
               </linearGradient>
             </defs>
-            <path className="era-beam" d="M115,50 L34.5,18" stroke="url(#beam-green)" style={{ color: "#22c55e" }} />
-            <path className="era-beam" d="M115,50 L193.2,15" stroke="url(#beam-blue)" style={{ color: "#3b82f6", animationDelay: "0.3s" }} />
-            <path className="era-beam" d="M115,50 L27.6,82" stroke="url(#beam-amber)" style={{ color: "#f59e0b", animationDelay: "0.6s" }} />
-            <path className="era-beam" d="M115,50 L197.8,84" stroke="url(#beam-pink)" style={{ color: "#ec4899", animationDelay: "0.9s" }} />
+            {/* Beams stop at 75% of the way to each card (not the card's center point),
+                so the dashed line clears the card body instead of running into its text. */}
+            <path className="era-beam" d="M115,50 L54.6,26" stroke="url(#beam-green)" style={{ color: "#22c55e" }} />
+            <path className="era-beam" d="M115,50 L173.7,23.75" stroke="url(#beam-blue)" style={{ color: "#3b82f6", animationDelay: "0.3s" }} />
+            <path className="era-beam" d="M115,50 L49.5,74" stroke="url(#beam-amber)" style={{ color: "#f59e0b", animationDelay: "0.6s" }} />
+            <path className="era-beam" d="M115,50 L177.1,75.5" stroke="url(#beam-pink)" style={{ color: "#ec4899", animationDelay: "0.9s" }} />
           </svg>
 
           <div className="era-node-card era-node-center">

@@ -49,10 +49,7 @@ export default function LoginForm() {
       <div className="glass" style={{ padding: 36, borderRadius: "var(--r-lg)" }}>
         <div className="logo" style={{ marginBottom: 28 }}>
           <span className="logo-mark">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="5.4" stroke="white" strokeWidth="2.2" />
-              <circle cx="8" cy="8" r="2.2" fill="white" />
-            </svg>
+            <img src="/logo-icon.svg" alt="" width={20} height={20} />
           </span>
           agentread
         </div>

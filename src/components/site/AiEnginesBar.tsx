@@ -1,10 +1,11 @@
 const ENGINES = [
+  { name: "ChatGPT", icon: <IconChatGPT /> },
+  { name: "Claude", icon: <IconClaude /> },
   { name: "Perplexity", icon: <IconPerplexity /> },
   { name: "Gemini", icon: <IconGemini /> },
   { name: "Google AI Mode", icon: <IconGoogle /> },
   { name: "Copilot", icon: <IconCopilot /> },
   { name: "Google AI Overview", icon: <IconGoogle /> },
-  { name: "ChatGPT", icon: <IconChatGPT /> },
 ];
 
 export default function AiEnginesBar() {
@@ -101,6 +102,17 @@ function IconCopilot() {
           <stop offset="1" stopColor="#8C6CF6" />
         </radialGradient>
       </defs>
+    </svg>
+  );
+}
+
+function IconClaude() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M7.5 3 3 20h3.6l1-3.2h6.8l1 3.2H19L14.5 3H7.5Zm.6 11 2.4-8 2.4 8H8.1Z"
+        fill="#D97757"
+      />
     </svg>
   );
 }

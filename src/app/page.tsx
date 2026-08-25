@@ -696,7 +696,7 @@ export const config = { matcher: "/:path*" };`,
               />
             </Reveal>
 
-            <Reveal className="bento-card glass glass-hover card-glow">
+            <Reveal className="bento-card glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconLlmsTxt /></span>
               <h3>
                 llms.txt generator <span className="tag tag-live">Live</span>
@@ -705,6 +705,13 @@ export const config = { matcher: "/:path*" };`,
                 Builds llms.txt and llms-full.txt from your real site structure. Not paywalled — the
                 meter is crawl budget, not the file.
               </p>
+              <Image
+                src="/llms-generator.png"
+                alt="llms.txt generator — generated Markdown from your real site structure"
+                width={1200}
+                height={800}
+                className="bento-shot"
+              />
             </Reveal>
             <Reveal delay={1} className="bento-card glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconAnalytics /></span>
@@ -723,7 +730,7 @@ export const config = { matcher: "/:path*" };`,
                 className="bento-shot"
               />
             </Reveal>
-            <Reveal delay={2} className="bento-card glass glass-hover card-glow">
+            <Reveal delay={2} className="bento-card glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconServe /></span>
               <h3>
                 Serve middleware <span className="tag tag-live">Live</span>
@@ -732,6 +739,13 @@ export const config = { matcher: "/:path*" };`,
                 Detects verified AI crawlers and hands them clean Markdown. Humans see your site
                 completely unchanged — see the real snippet above.
               </p>
+              <Image
+                src="/serve-middleware.png"
+                alt="Serve middleware flow — crawler request routed to full site or clean Markdown twin"
+                width={1200}
+                height={800}
+                className="bento-shot"
+              />
             </Reveal>
 
             <Reveal className="bento-card bento-wide glass glass-hover card-glow bento-media">
@@ -788,7 +802,7 @@ export const config = { matcher: "/:path*" };`,
                 className="bento-shot bento-shot-sm"
               />
             </Reveal>
-            <Reveal delay={1} className="bento-card glass glass-hover card-glow">
+            <Reveal delay={1} className="bento-card glass glass-hover card-glow bento-media bento-media-roadmap">
               <span className="bento-icon"><IconMention /></span>
               <h3>
                 Brand-mention tracking <span className="tag tag-soon">Roadmap</span>
@@ -797,13 +811,27 @@ export const config = { matcher: "/:path*" };`,
                 Whether a model names <em>you</em> in its answer, not just whether it can read you.
                 Not built yet.
               </p>
+              <Image
+                src="/brand-mention-roadmap.png"
+                alt="Brand-mention tracking concept — not built yet"
+                width={1200}
+                height={800}
+                className="bento-shot"
+              />
             </Reveal>
-            <Reveal delay={2} className="bento-card glass glass-hover card-glow">
+            <Reveal delay={2} className="bento-card glass glass-hover card-glow bento-media bento-media-roadmap">
               <span className="bento-icon"><IconCrawl /></span>
               <h3>
                 Pay-per-crawl <span className="tag tag-soon">Roadmap</span>
               </h3>
               <p>Charge unverified AI crawlers per read instead of giving content away. Not built yet.</p>
+              <Image
+                src="/pay-per-crawl-roadmap.png"
+                alt="Pay-per-crawl concept — not built yet"
+                width={1200}
+                height={800}
+                className="bento-shot"
+              />
             </Reveal>
           </div>
         </div>

@@ -84,9 +84,8 @@ confirmed via build output now showing `ƒ Proxy (Middleware)` as a registered r
 | Run `supabase/schema_v2.sql` | Second paste — audits, watches, agent_hits, usage, billing columns | `SETUP.md` §1 |
 | Run `supabase/schema_v3.sql` | Third paste — Autofix: github_connections, fix_jobs, fix_attempts, credits, margin view | `SETUP.md` §1 |
 | Run `supabase/schema_v4.sql` | Fourth paste — multi-gateway billing: provider columns, webhook dedupe, payments ledger, revenue views | `SETUP.md` §1 |
-| Run `supabase/schema_v5.sql` | Fifth paste — grants every table to `service_role`; without it every server-side code path (webhooks, admin reads) 42501s even though `authenticated`/`anon` work fine | `SETUP.md` §1 |
 | Set `SECRETS_ENCRYPTION_KEY` | Required before any GitHub token can be stored (`openssl rand -base64 48`) | `.env.example` |
-| Set `OPENAI_API_KEY` | Powers all Autofix LLM routes (gpt-5-nano/mini) — no Anthropic key needed | `.env.example` |
+| Set `ANTHROPIC_API_KEY` | Only needed for code fixes; deterministic fixes work without it | `.env.example` |
 | **Pick at least one payment gateway** | You need only one to start. Which one depends on your entity — see the gateway table in `.env.example` | `.env.example` |
 | Create Stripe products + prices | Needs your Stripe account; set `STRIPE_PRICE_PRO` / `STRIPE_PRICE_SCALE` | `.env.example` |
 | Add the Stripe webhook endpoint | Point it at `/api/billing/webhook`, set `STRIPE_WEBHOOK_SECRET` | `.env.example` |

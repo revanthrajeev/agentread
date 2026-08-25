@@ -4,9 +4,11 @@ import ReadScanWidget from "@/components/ReadScanWidget";
 import Reveal from "@/components/site/Reveal";
 import CountUp from "@/components/site/CountUp";
 import Marquee from "@/components/site/Marquee";
+import AiEnginesBar from "@/components/site/AiEnginesBar";
 import CodeTabs from "@/components/site/CodeTabs";
-import FloatingHeroStats from "@/components/site/FloatingHeroStats";
 import CrawlerNetworkDiagram from "@/components/site/CrawlerNetworkDiagram";
+import OrchestrationDiagram from "@/components/site/OrchestrationDiagram";
+import EraDiagram from "@/components/site/EraDiagram";
 import {
   IconAudit,
   IconAutofix,
@@ -74,8 +76,18 @@ const MCP_CLIENTS = [
   "VS Code",
 ];
 
+/** Never let a slow/paused Supabase project hang the landing page. */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
+const EMPTY_STATS_FALLBACK = { totalReads: 0, sitesScanned: 0, avgReadScore: null };
+
 export default async function Home() {
-  const stats = await getPublicStats();
+  const stats = await withTimeout(getPublicStats(), 3000, EMPTY_STATS_FALLBACK);
   const showStats = shouldShowPublicStats(stats);
 
   // Shared with /pricing so the two pages can never quote different currencies.
@@ -85,29 +97,33 @@ export default async function Home() {
     <main>
       {/* ======================= HERO ======================= */}
       <header className="hero" id="top">
-        <div className="container hero-grid">
-          <div>
+        <div className="container">
+          <div className="hero-center">
             <Reveal inline>
               <span className="badge">
-                <span className="dot" /> Audit, llms.txt, monitoring and Autofix — all live
+                <span className="dot" />
+                Audit, llms.txt, monitoring and Autofix — all live
               </span>
             </Reveal>
+
             <Reveal delay={1}>
               <h1 className="hero-title">
                 AI is answering questions about you.{" "}
                 <span className="grad-text">Badly.</span>
               </h1>
             </Reveal>
+
             <Reveal delay={2}>
               <p className="hero-sub">
-                When ChatGPT, Claude and Perplexity can&apos;t parse your pages, you get left out of
-                the answer — or described wrong. AgentRead scores what they actually see, tells you
-                which pages fail and why, and <b>ships the fix as a pull request.</b>
+                When ChatGPT, Claude and Perplexity can&apos;t parse your pages, you get left out
+                of the answer — or described wrong. AgentRead scores what they actually see, tells
+                you which pages fail and why, and <b>ships the fix as a pull request.</b>
               </p>
             </Reveal>
+
             <Reveal delay={3}>
               <div className="hero-cta-row">
-                <Link href="/login" className="btn btn-primary btn-lg magnetic">
+                <Link href="/login" className="btn btn-primary btn-lg">
                   Start free <span className="arr">→</span>
                 </Link>
                 <Link href="#pricing" className="btn btn-ghost btn-lg">
@@ -115,6 +131,7 @@ export default async function Home() {
                 </Link>
               </div>
             </Reveal>
+
             <Reveal delay={4}>
               <p className="hero-note">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -129,122 +146,125 @@ export default async function Home() {
                 Free plan · no card · 2 full site audits to start
               </p>
             </Reveal>
-            <Reveal delay={5}>
-              <div style={{ marginTop: 28 }}>
-                <p className="hero-note" style={{ marginBottom: 10, opacity: 0.7 }}>
-                  Or skip the pitch — paste your URL and see what agents actually get:
-                </p>
-                <ReadScanWidget />
+
+            {/* Product preview frame — geoly-style framed mockup */}
+            <Reveal delay={5} className="hero-preview-wrap">
+              <div className="hero-preview-frame">
+                {/* Browser chrome bar */}
+                <div className="hero-preview-bar">
+                  <span className="preview-dot preview-dot-r" />
+                  <span className="preview-dot preview-dot-y" />
+                  <span className="preview-dot preview-dot-g" />
+                  <span className="preview-label">agentread · audit results</span>
+                </div>
+                {/* Terminal mockup — kept dark so it reads as a product screenshot */}
+                <div className="terminal" style={{ borderRadius: "0 0 calc(var(--r-xl) - 2px) calc(var(--r-xl) - 2px)", border: "none", boxShadow: "none" }}>
+                  <div className="term-body" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, minHeight: 280 }}>
+                    {/* Left: audit summary */}
+                    <div>
+                      <div style={{ marginBottom: 12, opacity: 0.6, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        Audit · example.com
+                      </div>
+                      <div>
+                        &nbsp;&nbsp;<span className="t-key">ReadScore</span>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="t-num">41</span>
+                        <span className="t-dim"> / 100</span>
+                      </div>
+                      <div>
+                        &nbsp;&nbsp;<span className="t-key">Pages audited</span>
+                        &nbsp;&nbsp;<span className="t-num">128</span>
+                      </div>
+                      <div>
+                        &nbsp;&nbsp;<span className="t-key">Failing</span>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="t-num">73</span>
+                      </div>
+                      <div>&nbsp;</div>
+                      <div>
+                        &nbsp;&nbsp;<span className="t-flag">✗</span> price only in client-side JS{" "}
+                        <span className="t-dim">— 52 pages</span>
+                      </div>
+                      <div>
+                        &nbsp;&nbsp;<span className="t-flag">✗</span> /llms.txt missing{" "}
+                        <span className="t-dim">— site-wide</span>
+                      </div>
+                      <div>
+                        &nbsp;&nbsp;<span className="t-flag">✗</span> GPTBot blocked in robots.txt{" "}
+                        <span className="t-dim">— site-wide</span>
+                      </div>
+                      <div>
+                        &nbsp;&nbsp;<span className="t-flag">✗</span> primary CTA disabled in markup{" "}
+                        <span className="t-dim">— 19 pages</span>
+                      </div>
+                      <div style={{ marginTop: 12 }}>
+                        <span className="t-ok">
+                          ✓ 3 of these fix themselves — Autofix opens one pull request.
+                        </span>
+                      </div>
+                    </div>
+                    {/* Right: what the scan widget looks like */}
+                    <div>
+                      <div style={{ marginBottom: 12, opacity: 0.6, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        Paste a URL to scan
+                      </div>
+                      <ReadScanWidget />
+                    </div>
+                  </div>
+                </div>
+                <div className="hero-preview-fade" />
               </div>
             </Reveal>
           </div>
 
-          <Reveal variant="right" delay={2} className="hero-visual-wrap">
-            {showStats && (
-              <FloatingHeroStats
-                totalReads={stats.totalReads}
-                avgReadScore={stats.avgReadScore}
-                sitesScanned={stats.sitesScanned}
-              />
-            )}
-            <div className="terminal tilt">
-              <div className="term-bar">
-                <span className="term-dot r" />
-                <span className="term-dot y" />
-                <span className="term-dot g" />
-                <span className="term-title">agentread — a real audit, abridged</span>
-              </div>
-              <div className="term-body">
-                <div>
-                  <span className="t-prompt">$</span> agentread audit{" "}
-                  <span className="t-str">https://example.com</span>
+          {/* Hidden wholesale below MIN_DISPLAY_STATS reads — see src/lib/stats.ts. Publishing
+              zeros is worse than publishing nothing; this reappears on its own once usage lands. */}
+          {showStats && (
+            <div className="hero-stats">
+              <Reveal delay={1}>
+                <div className="stat-tile glass">
+                  <div className="stat-label">Websites scanned</div>
+                  <div className="stat-value">
+                    <CountUp value={stats.sitesScanned} />
+                  </div>
+                  <div className="stat-sub">distinct domains, all time</div>
                 </div>
-                <div>&nbsp;</div>
-                <div>
-                  &nbsp;&nbsp;<span className="t-key">ReadScore</span>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="t-num">41</span>
-                  <span className="t-dim"> / 100</span>
+              </Reveal>
+              <Reveal delay={2}>
+                <div className="stat-tile glass">
+                  <div className="stat-label">Average ReadScore</div>
+                  <div className="stat-value">
+                    {stats.avgReadScore === null ? "—" : <CountUp value={stats.avgReadScore} />}
+                    {stats.avgReadScore !== null && <span className="unit"> /100</span>}
+                  </div>
+                  <div className="stat-sub">{stats.avgReadScore === null ? "no scans yet" : "across every page scored"}</div>
                 </div>
-                <div>
-                  &nbsp;&nbsp;<span className="t-key">Pages audited</span>
-                  &nbsp;&nbsp;<span className="t-num">128</span>
+              </Reveal>
+              <Reveal delay={3}>
+                <div className="stat-tile glass">
+                  <div className="stat-label">Pages scored</div>
+                  <div className="stat-value">
+                    <CountUp value={stats.totalReads} />
+                  </div>
+                  <div className="stat-sub">across scans, audits, Serve + MCP</div>
                 </div>
-                <div>
-                  &nbsp;&nbsp;<span className="t-key">Failing</span>
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span className="t-num">73</span>
+              </Reveal>
+              <Reveal delay={4}>
+                <div className="stat-tile glass">
+                  <div className="stat-label">AI crawlers recognised</div>
+                  <div className="stat-value">
+                    <CountUp value={CRAWLER_COUNT} />
+                  </div>
+                  <div className="stat-sub">GPTBot, ClaudeBot, PerplexityBot + more</div>
                 </div>
-                <div>&nbsp;</div>
-                <div>
-                  &nbsp;&nbsp;<span className="t-flag">✗</span> price only in client-side JS{" "}
-                  <span className="t-dim">— 52 pages</span>
-                </div>
-                <div>
-                  &nbsp;&nbsp;<span className="t-flag">✗</span> /llms.txt missing{" "}
-                  <span className="t-dim">— site-wide</span>
-                </div>
-                <div>
-                  &nbsp;&nbsp;<span className="t-flag">✗</span> GPTBot blocked in robots.txt{" "}
-                  <span className="t-dim">— site-wide</span>
-                </div>
-                <div>
-                  &nbsp;&nbsp;<span className="t-flag">✗</span> primary CTA disabled in markup{" "}
-                  <span className="t-dim">— 19 pages</span>
-                </div>
-                <div style={{ marginTop: 10 }}>
-                  <span className="t-ok">
-                    ✓ 3 of these fix themselves — Autofix opens one pull request.
-                  </span>
-                </div>
-              </div>
+              </Reveal>
             </div>
-          </Reveal>
+          )}
         </div>
-
-        {/* Hidden wholesale below MIN_DISPLAY_STATS reads — see src/lib/stats.ts. Publishing
-            zeros is worse than publishing nothing; this reappears on its own once usage lands. */}
-        {showStats && (
-        <div className="container hero-stats">
-          <Reveal delay={1}>
-            <div className="stat-tile glass">
-              <div className="stat-label">Websites scanned</div>
-              <div className="stat-value">
-                <CountUp value={stats.sitesScanned} />
-              </div>
-              <div className="stat-sub">distinct domains, all time</div>
-            </div>
-          </Reveal>
-          <Reveal delay={2}>
-            <div className="stat-tile glass">
-              <div className="stat-label">Average ReadScore</div>
-              <div className="stat-value">
-                {stats.avgReadScore === null ? "—" : <CountUp value={stats.avgReadScore} />}
-                {stats.avgReadScore !== null && <span className="unit"> /100</span>}
-              </div>
-              <div className="stat-sub">{stats.avgReadScore === null ? "no scans yet" : "across every page scored"}</div>
-            </div>
-          </Reveal>
-          <Reveal delay={3}>
-            <div className="stat-tile glass">
-              <div className="stat-label">Pages scored</div>
-              <div className="stat-value">
-                <CountUp value={stats.totalReads} />
-              </div>
-              <div className="stat-sub">across scans, audits, Serve + MCP</div>
-            </div>
-          </Reveal>
-          <Reveal delay={4}>
-            <div className="stat-tile glass">
-              <div className="stat-label">AI crawlers recognised</div>
-              <div className="stat-value">
-                <CountUp value={CRAWLER_COUNT} />
-              </div>
-              <div className="stat-sub">GPTBot, ClaudeBot, PerplexityBot + more</div>
-            </div>
-          </Reveal>
-        </div>
-        )}
       </header>
 
+      {/* Geoly-style AI engines strip */}
+      <AiEnginesBar />
+
+      {/* Geoly-style logo chip marquee */}
       <Marquee label="Speaks standard MCP — drops into any compatible client" items={MCP_CLIENTS} />
 
       <section className="section-tight">
@@ -252,17 +272,25 @@ export default async function Home() {
           <CrawlerNetworkDiagram />
         </div>
       </section>
+
       {/* ======================= PRODUCT VISUAL ======================= */}
       <section className="section-tight">
         <div className="container">
           <Reveal>
-            <div className="glass" style={{ padding: 8, borderRadius: "var(--r-lg)", overflow: "hidden" }}>
+            {/* Geoly-style framed mockup */}
+            <div style={{
+              background: "var(--bg-2)",
+              border: "1px solid var(--border)",
+              borderRadius: "calc(var(--r-xl) + 4px)",
+              padding: 8,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05), 0 24px 80px -24px rgba(0,0,0,0.12)",
+            }}>
               <Image
                 src="/dashboard-mockup.jpg"
                 alt="Illustrative mockup of an AgentRead audit result — ReadScore gauge, findings list, token-reduction chart"
                 width={1376}
                 height={768}
-                style={{ width: "100%", height: "auto", borderRadius: 12, display: "block" }}
+                style={{ width: "100%", height: "auto", borderRadius: "calc(var(--r-xl) - 2px)", display: "block" }}
                 priority={false}
               />
             </div>
@@ -299,7 +327,7 @@ export default async function Home() {
             <Reveal variant="left">
               <div className="tax-card glass">
                 <h3>
-                  <span className="tag sev-high" style={{ border: 0 }}>
+                  <span className="tag tag-alpha" style={{ border: 0 }}>
                     Raw HTML
                   </span>{" "}
                   what the crawler downloads
@@ -345,7 +373,7 @@ export default async function Home() {
             <Reveal variant="right">
               <div className="tax-card glass">
                 <h3>
-                  <span className="tag sev-ok" style={{ border: 0 }}>
+                  <span className="tag tag-live" style={{ border: 0 }}>
                     With AgentRead
                   </span>{" "}
                   what the crawler reads
@@ -487,6 +515,28 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ======================= AGENT RUNTIME ======================= */}
+      <section className="section" id="runtime">
+        <div className="container">
+          <Reveal>
+            <div className="section-head center">
+              <p className="eyebrow center">Under the hood</p>
+              <h2 className="title">
+                AgentRead runs the loop <span className="grad-text">so you don&apos;t have to.</span>
+              </h2>
+              <p className="lead" style={{ marginInline: "auto" }}>
+                Audit → Autofix → Watch isn&apos;t three tools you operate — it&apos;s one runtime
+                reacting to real triggers and producing real output, on a schedule or on demand.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal>
+            <OrchestrationDiagram />
+          </Reveal>
+        </div>
+      </section>
+
       {/* ======================= SERVE SNIPPET ======================= */}
       <section className="section-tight" id="serve">
         <div className="container">
@@ -608,7 +658,7 @@ export const config = { matcher: "/:path*" };`,
           </Reveal>
 
           <div className="bento">
-            <Reveal className="bento-card bento-wide glass glass-hover card-glow">
+            <Reveal className="bento-card bento-wide glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconAudit /></span>
               <h3>
                 Site audit <span className="tag tag-live">Live</span>
@@ -618,8 +668,15 @@ export const config = { matcher: "/:path*" };`,
                 returns a per-page ReadScore with every deduction spelled out as a readable flag.
               </p>
               <span className="bento-foot">128 pages · 73 failing</span>
+              <Image
+                src="/audit-table.png"
+                alt="Audit findings table — pages, ReadScore, status, fix"
+                width={1200}
+                height={800}
+                className="bento-shot"
+              />
             </Reveal>
-            <Reveal delay={1} className="bento-card bento-wide glass glass-hover card-glow">
+            <Reveal delay={1} className="bento-card bento-wide glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconAutofix /></span>
               <h3>
                 Autofix pull requests <span className="tag tag-live">Live</span>
@@ -630,6 +687,13 @@ export const config = { matcher: "/:path*" };`,
                 when confidence is low.
               </p>
               <span className="bento-foot">never pushes to main, never auto-merges</span>
+              <Image
+                src="/autofix-pr.png"
+                alt="Autofix pull request diff — llms.txt and robots.txt changes"
+                width={1200}
+                height={800}
+                className="bento-shot"
+              />
             </Reveal>
 
             <Reveal className="bento-card glass glass-hover card-glow">
@@ -642,7 +706,7 @@ export const config = { matcher: "/:path*" };`,
                 meter is crawl budget, not the file.
               </p>
             </Reveal>
-            <Reveal delay={1} className="bento-card glass glass-hover card-glow">
+            <Reveal delay={1} className="bento-card glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconAnalytics /></span>
               <h3>
                 Agent-traffic analytics <span className="tag tag-live">Live</span>
@@ -651,6 +715,13 @@ export const config = { matcher: "/:path*" };`,
                 A server-side log of which AI crawler fetched which path — the one dataset an
                 outside-in monitoring tool structurally cannot produce.
               </p>
+              <Image
+                src="/crawler-matrix.png"
+                alt="Crawler traffic matrix — AI crawlers vs. page categories"
+                width={1200}
+                height={700}
+                className="bento-shot"
+              />
             </Reveal>
             <Reveal delay={2} className="bento-card glass glass-hover card-glow">
               <span className="bento-icon"><IconServe /></span>
@@ -663,7 +734,7 @@ export const config = { matcher: "/:path*" };`,
               </p>
             </Reveal>
 
-            <Reveal className="bento-card bento-wide glass glass-hover card-glow">
+            <Reveal className="bento-card bento-wide glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconWatch /></span>
               <h3>
                 Regression monitoring <span className="tag tag-live">Live</span>
@@ -673,8 +744,15 @@ export const config = { matcher: "/:path*" };`,
                 failed run still records itself, so a broken monitor can&apos;t retry every tick.
               </p>
               <span className="bento-foot">alerts on drops only</span>
+              <Image
+                src="/readscore-trend.png"
+                alt="ReadScore trend — score improving after a fix"
+                width={700}
+                height={500}
+                className="bento-shot bento-shot-sm"
+              />
             </Reveal>
-            <Reveal delay={1} className="bento-card bento-wide glass glass-hover card-glow">
+            <Reveal delay={1} className="bento-card bento-wide glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconReport /></span>
               <h3>
                 Public audit reports <span className="tag tag-live">Live</span>
@@ -684,9 +762,16 @@ export const config = { matcher: "/:path*" };`,
                 needed to read it.
               </p>
               <span className="bento-foot">/report/&lt;token&gt;</span>
+              <Image
+                src="/ai-citation-shelf.png"
+                alt="AI answer citing a ranked list of sources"
+                width={1200}
+                height={900}
+                className="bento-shot"
+              />
             </Reveal>
 
-            <Reveal className="bento-card glass glass-hover card-glow">
+            <Reveal className="bento-card glass glass-hover card-glow bento-media">
               <span className="bento-icon"><IconMcp /></span>
               <h3>
                 MCP server <span className="tag tag-live">Live</span>
@@ -695,6 +780,13 @@ export const config = { matcher: "/:path*" };`,
                 {MCP_TOOLS.length} tools — {MCP_TOOLS.join(", ")} — over a remote MCP endpoint, so
                 your own assistant can audit a site mid-conversation.
               </p>
+              <Image
+                src="/readscore-dial.png"
+                alt="ReadScore dial"
+                width={800}
+                height={800}
+                className="bento-shot bento-shot-sm"
+              />
             </Reveal>
             <Reveal delay={1} className="bento-card glass glass-hover card-glow">
               <span className="bento-icon"><IconMention /></span>
@@ -716,6 +808,7 @@ export const config = { matcher: "/:path*" };`,
           </div>
         </div>
       </section>
+
       {/* ======================= DEVELOPER EXPERIENCE ======================= */}
       <section className="section" id="dx">
         <div className="container">
@@ -894,6 +987,7 @@ export const config = { matcher: "/:path*" };`,
           </Reveal>
         </div>
       </section>
+
       {/* ======================= VALIDATION ======================= */}
       <section className="section" id="validation">
         <div className="container">
@@ -907,7 +1001,10 @@ export const config = { matcher: "/:path*" };`,
               </p>
             </div>
           </Reveal>
-          <div className="valid-grid">
+          <Reveal>
+            <EraDiagram />
+          </Reveal>
+          <div className="valid-grid" style={{ marginTop: 40 }}>
             <Reveal delay={1}>
               <div className="valid-card glass glass-hover">
                 <div className="valid-src">Profound</div>
@@ -951,6 +1048,7 @@ export const config = { matcher: "/:path*" };`,
           </div>
         </div>
       </section>
+
       {/* ======================= LIVE READSCAN ======================= */}
       <section className="section-tight">
         <div className="container">
@@ -1054,7 +1152,7 @@ export const config = { matcher: "/:path*" };`,
                     </ul>
                     <Link
                       href={id === "free" ? "/login" : "/pricing"}
-                      className={featured ? "btn btn-primary magnetic" : "btn btn-ghost"}
+                      className={featured ? "btn btn-primary" : "btn btn-ghost"}
                     >
                       {id === "free" ? "Start free" : `Choose ${plan.name}`}
                     </Link>
@@ -1074,6 +1172,15 @@ export const config = { matcher: "/:path*" };`,
           </Reveal>
         </div>
       </section>
+
+      {/* Geoly-style "wired into your stack" strip — every name here is a real integration in
+          this codebase (GitHub for Autofix PRs, Stripe/PayPal/Razorpay for billing, Next.js for
+          Serve middleware), not a placeholder logo cloud. */}
+      <Marquee
+        label="Wired into your stack"
+        items={["GitHub", "Stripe", "Razorpay", "PayPal", "Next.js", "Supabase", "Vercel", "Netlify"]}
+      />
+
       {/* ======================= FAQ ======================= */}
       <section className="section" id="faq">
         <div className="container">
@@ -1164,27 +1271,28 @@ export const config = { matcher: "/:path*" };`,
           </Reveal>
         </div>
       </section>
+
       {/* ======================= FINAL CTA ======================= */}
       <section className="cta-final container" id="start">
         <Reveal inline>
           <p className="eyebrow center">Find out in about a minute</p>
         </Reveal>
         <Reveal delay={1}>
-          <h2 className="title" style={{ fontSize: "clamp(32px,5vw,52px)" }}>
+          <h2 className="title" style={{ fontSize: "clamp(32px,5vw,52px)", textAlign: "center" }}>
             Agents are already reading you.
             <br />
             <span className="grad-text">Make sure they read you right.</span>
           </h2>
         </Reveal>
         <Reveal delay={2}>
-          <p className="lead" style={{ marginInline: "auto" }}>
+          <p className="lead" style={{ marginInline: "auto", textAlign: "center" }}>
             Two full site audits on the free plan, no card. If your score comes back fine, you&apos;ve
             lost a minute and learned something.
           </p>
         </Reveal>
         <Reveal delay={3}>
-          <div className="hero-cta-row" style={{ justifyContent: "center" }}>
-            <Link href="/login" className="btn btn-primary btn-lg magnetic">
+          <div className="hero-cta-row">
+            <Link href="/login" className="btn btn-primary btn-lg">
               Start free <span className="arr">→</span>
             </Link>
             <a href="#top" className="btn btn-ghost btn-lg">
@@ -1193,19 +1301,17 @@ export const config = { matcher: "/:path*" };`,
           </div>
         </Reveal>
       </section>
+
       {/* ======================= FOOTER ======================= */}
       <footer className="footer">
         <div className="container">
           <div className="footer-grid">
             <div>
               <Link className="logo" href="/">
-                <span className="logo-mark">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="5.4" stroke="white" strokeWidth="2.2" />
-                    <circle cx="8" cy="8" r="2.2" fill="white" />
-                  </svg>
+                <span className="logo-mark" aria-hidden="true">
+                  <img src="/logo-icon.svg" alt="" width={20} height={20} />
                 </span>
-                agentread
+                <span className="logo-text">agentread</span>
               </Link>
               <p className="footer-desc">
                 AI search visibility you can actually fix. Score what assistants see on your
